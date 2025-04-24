@@ -1,0 +1,5 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^compile_commands\.json$
+^\.cache$
+^inst/lib/.+$

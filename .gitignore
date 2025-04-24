@@ -1,0 +1,15 @@
+.Rproj.user
+.Rhistory
+.RData
+.Ruserdata
+compile_commands.json
+.cache
+inst/include/OpenEXR
+inst/lib
+src/*.so
+src/*.o
+src/Makevars
+src/OpenEXR/build
+configure
+config.status
+config.log
