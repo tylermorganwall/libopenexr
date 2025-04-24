@@ -1,11 +1,3 @@
-Files: src/pcg/*
-Copyright: 2014-2019 Melissa O'Neill and the PCG Project contributors.
-URL: https://github.com/imneme/pcg-cpp
-
-File: src/tinyobj/*
-Copyright: 2012-2019 Syoyo Fujita
-URL: https://github.com/syoyo/tinyobjloader/
-
-File: src/miniply.h src/miniply.cpp
-Copyright: 2019 Vilya Harvey
-URL: https://github.com/vilya/miniply/
+Files: src/OpenEXR/*
+Copyright: 2025 Contributors to the OpenEXR Project
+URL: https://github.com/AcademySoftwareFoundation/openexr
