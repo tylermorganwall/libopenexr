@@ -10,6 +10,3 @@ txt <- gsub(
   txt
 )
 writeLines(txt, fn)
-
-# "#    pragma GCC diagnostic" -> "//#    pragma GCC diagnostic"
-# "#    file->isOptimizationEnabled ();" -> "true;"

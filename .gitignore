@@ -10,6 +10,5 @@ src/*.so
 src/*.o
 src/Makevars
 src/OpenEXR/build
-configure
 config.status
 config.log

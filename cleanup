@@ -1,11 +1,3 @@
-#!/bin/sh
-
-# Clean up all build artifacts
-rm -rf src/OpenEXR/build
-rm -rf src/OpenEXR/build/initial-cache.cmake
-rm -rf src/Makevars
-rm -rf src/Makevars.win
-rm -rf config.log
-rm -rf config.status
-rm -rf autom4te.cache
-rm -rf configure~
+#!/usr/bin/env sh
+: "${R_HOME=`R RHOME`}"
+"${R_HOME}/bin/Rscript" tools/config.R cleanup "$@"

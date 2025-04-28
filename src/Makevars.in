@@ -30,16 +30,18 @@ $(OBJECTS): $(STATIC_LIB)
 $(STATIC_LIB): 
 	cd $(OPENEXR_DIR) && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
-	  $(OPENEXR_DIR)/src/OpenEXR/src/lib/OpenEXRCore/string.c \
+	  "src/OpenEXR/src/lib/OpenEXRCore/string.c" \
 	  "#    pragma GCC diagnostic" \
 	  "//#    pragma GCC diagnostic" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
-	  $(OPENEXR_DIR)/src/OpenEXR/src/lib/OpenEXR/ImfInputPart.cpp \
+	  "src/OpenEXR/src/lib/OpenEXR/ImfInputPart.cpp" \
 	  "file->isOptimizationEnabled \(\)" \
 	  "true" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
-	  $(OPENEXR_DIR)/src/OpenEXR/src/lib/OpenEXRCore/chunk.c \
+	  "src/OpenEXR/src/lib/OpenEXRCore/chunk.c" \
 	  "uint64_t     eptr = 0" \
 	  "uintptr_t     eptr = 0" && \
-	cd $(OPENEXR_DIR)/src/OpenEXR/build && $(CMAKE) --build . --config Release && \
-	cd $(OPENEXR_DIR)/src/OpenEXR/build && $(CMAKE) --install . --config Release 
+	cd $(OPENEXR_DIR)/src/OpenEXR/build && \
+  	$(CMAKE) -C ../build/initial-cache.cmake .. && \
+	$(CMAKE) --build . --config Release && \
+	$(CMAKE) --install . --config Release 
