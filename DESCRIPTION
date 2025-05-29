@@ -121,7 +121,7 @@ Authors@R:
     )
 Description: Provides the 'OpenEXR' static library and 'C++' headers needed
     to link R packages against the 'OpenEXR' high-dynamic-range image I/O
-    library, along with a basic interface to load 'EXR' images into R.
+    library, along with a basic R interface to load 'EXR' images as arrays.
 Depends: R (>= 4.3.0)
 License: BSD_3_clause + file LICENSE
 LinkingTo: libimath, libdeflate
