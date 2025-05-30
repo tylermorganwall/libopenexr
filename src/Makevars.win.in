@@ -26,19 +26,43 @@ all: $(OBJECTS)
 
 $(OBJECTS): $(STATIC_LIB)
 
-$(STATIC_LIB):
+$(STATIC_LIB): 
 	cd $(OPENEXR_DIR) && \
-	"$(R_HOME)/bin/Rscript" inst/scripts/search-replace.R \
-	  $(OPENEXR_DIR)/src/OpenEXR/src/lib/OpenEXRCore/string.c \
+	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
+	  "src/OpenEXR/src/lib/OpenEXRCore/string.c" \
 	  "#    pragma GCC diagnostic" \
 	  "//#    pragma GCC diagnostic" && \
-	"$(R_HOME)/bin/Rscript" inst/scripts/search-replace.R \
-	  $(OPENEXR_DIR)/src/OpenEXR/src/lib/OpenEXR/ImfInputPart.cpp \
-	  "file->isOptimizationEnabled \\(\\)" \
+	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
+	  "src/OpenEXR/src/lib/OpenEXR/ImfInputPart.cpp" \
+	  "file->isOptimizationEnabled \(\)" \
 	  "true" && \
-	"$(R_HOME)/bin/Rscript" inst/scripts/search-replace.R \
-	  $(OPENEXR_DIR)/src/OpenEXR/src/lib/OpenEXRCore/chunk.c \
+	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
+	  "src/OpenEXR/src/lib/OpenEXRCore/chunk.c" \
 	  "uint64_t     eptr = 0" \
 	  "uintptr_t     eptr = 0" && \
-	cd $(OPENEXR_DIR)/src/OpenEXR/build && $(CMAKE) --build . --config Release && \
-	cd $(OPENEXR_DIR)/src/OpenEXR/build && $(CMAKE) --install . --config Release
+	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
+	  "src/OpenEXR/cmake/OpenEXRConfig.h.in" \
+	  "\[\[deprecated \(msg\)\]\]" \
+	  "" && \
+	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
+	  "src/OpenEXR/cmake/OpenEXRConfig.h.in" \
+	  "__declspec\(deprecated \(msg\)\)" \
+	  "" && \
+	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
+	  "src/OpenEXR/cmake/OpenEXRConfig.h.in" \
+	  "__attribute__ \(\(deprecated \(msg\)\)\)" \
+	  "" && \
+	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
+	  "src/OpenEXR/src/lib/IlmThread/IlmThreadProcessGroup.h" \
+	  "std::cerr" \
+	  "//std::cerr" && \
+	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
+	  "src/OpenEXR/src/lib/IlmThread/IlmThreadProcessGroup.h" \
+	  "if \(!ret\)" \
+	  "if \(!ret\) \{\}" && \
+	"$(R_HOME)/bin/Rscript" tools/remove_stderr.R \
+	  "@PACKAGE_BASE_DIR@/src/OpenEXR/" && \
+	cd $(OPENEXR_DIR)/src/OpenEXR/build && \
+  	$(CMAKE) -C ../build/initial-cache.cmake .. && \
+	$(CMAKE) --build . --config Release && \
+	$(CMAKE) --install . --config Release 
