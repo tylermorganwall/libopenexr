@@ -49,10 +49,6 @@ strip_stderr_calls = function(
 
 ## When executed directly (not sourced) run on supplied directory,
 ## defaulting to '.'.
-if (identical(sys.frames()[[1]], globalenv())) {
-	args = commandArgs(trailingOnly = TRUE)
-	dir = if (length(args)) args[1] else "."
-	strip_stderr_calls(root_dir = dir)
-	list.files(pattern = "\\.bak", recursive = TRUE)
-	unlink(list.files(pattern = "\\.bak", recursive = TRUE))
-}
+args = commandArgs(trailingOnly = TRUE)
+strip_stderr_calls(root_dir = args[1])
+unlink(list.files(pattern = "\\.bak", recursive = TRUE))
