@@ -37,7 +37,7 @@ strip_stderr_calls = function(
 		txt = if (is.na(size) || size == 0) "" else
 			readChar(f, size, useBytes = TRUE)
 
-		new_txt = gsub(pat, "", txt, perl = TRUE)
+		new_txt = gsub(pat, ";", txt, perl = TRUE)
 
 		if (!identical(txt, new_txt)) {
 			file.copy(f, paste0(f, backup_suffix), overwrite = TRUE)
@@ -49,8 +49,10 @@ strip_stderr_calls = function(
 
 ## When executed directly (not sourced) run on supplied directory,
 ## defaulting to '.'.
-if (identical(sys.frames()[[1]], globalenv()) && !interactive()) {
+if (identical(sys.frames()[[1]], globalenv())) {
 	args = commandArgs(trailingOnly = TRUE)
 	dir = if (length(args)) args[1] else "."
 	strip_stderr_calls(root_dir = dir)
+	list.files(pattern = "\\.bak", recursive = TRUE)
+	unlink(list.files(pattern = "\\.bak", recursive = TRUE))
 }
