@@ -59,7 +59,7 @@ $(STATIC_LIB):
 	  "//std::cerr" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/IlmThread/IlmThreadProcessGroup.h" \
-	  "if \(!ret\).+" \
+	  "if \(!ret\)( \{\})?" \
 	  "if \(!ret\) \{\}" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/OpenEXRCore/internal_structs.c" \
@@ -71,3 +71,8 @@ $(STATIC_LIB):
   	$(CMAKE) -C ../build/initial-cache.cmake .. && \
 	$(CMAKE) --build . --config Release && \
 	$(CMAKE) --install . --config Release 
+
+clean: 
+	rm -rf @PACKAGE_BASE_DIR@/src/OpenEXR/build && 
+	rm -rf @PACKAGE_BASE_DIR@/src/Makevars &&
+	rm -rf @PACKAGE_BASE_DIR@/src/Makevars.win

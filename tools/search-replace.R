@@ -23,4 +23,5 @@ if (sum(newlines) > 0) {
 		sprintf("Did not find any changes to make in '%s'", fn)
 	)
 }
-writeLines(txt_new, fn)
+newline = if (.Platform$OS.type == "windows") "\r\n" else "\n"
+writeLines(txt_new, fn, sep = newline)
