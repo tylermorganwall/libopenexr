@@ -52,24 +52,30 @@ IMATH_INCLUDE_DIR = system.file(
 	package = "libimath",
 	mustWork = TRUE
 )
-IMATH_LIB_ARCH = normalizePath(sprintf(
-	"%s/%s",
-	system.file(
-		"lib",
-		package = "libimath",
-		mustWork = TRUE
+IMATH_LIB_ARCH = normalizePath(
+	sprintf(
+		"%s/%s",
+		system.file(
+			"lib",
+			package = "libimath",
+			mustWork = TRUE
+		),
+		Sys.info()[["machine"]]
 	),
-	Sys.info()[["machine"]]
-))
-DEFLATE_LIB_ARCH = normalizePath(sprintf(
-	"%s/%s",
-	system.file(
-		"lib",
-		package = "libdeflate",
-		mustWork = TRUE
+	winslash = "/"
+)
+DEFLATE_LIB_ARCH = normalizePath(
+	sprintf(
+		"%s/%s",
+		system.file(
+			"lib",
+			package = "libdeflate",
+			mustWork = TRUE
+		),
+		Sys.info()[["machine"]]
 	),
-	Sys.info()[["machine"]]
-))
+	winslash = "/"
+)
 
 # Use pkg-config (if available) to find a system library
 package_name = "libopenexr"
