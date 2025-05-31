@@ -61,6 +61,10 @@ $(STATIC_LIB):
 	  "src/OpenEXR/src/lib/IlmThread/IlmThreadProcessGroup.h" \
 	  "if \(!ret\).+" \
 	  "if \(!ret\) \{\}" && \
+	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
+	  "src/OpenEXR/src/lib/OpenEXRCore/internal_structs.c" \
+	  "fflush \(stderr\);" \
+	  ";" && \
 	"$(R_HOME)/bin/Rscript" tools/remove_stderr.R \
 	  "@PACKAGE_BASE_DIR@/src/OpenEXR/" && \
 	cd $(OPENEXR_DIR)/src/OpenEXR/build && \

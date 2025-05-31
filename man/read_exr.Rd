@@ -8,6 +8,8 @@ read_exr(path, array = FALSE)
 }
 \arguments{
 \item{path}{Character scalar. Path to an `.exr` file.}
+
+\item{array}{Default `FALSE`. Return a 4-layer RGBA array instead of a list.}
 }
 \value{
 A list with elements `r`, `g`, `b`, `a` (numeric matrices), and

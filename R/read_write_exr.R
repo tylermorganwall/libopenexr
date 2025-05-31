@@ -3,6 +3,7 @@
 #' Load an RGBA OpenEXR image into R numeric matrices.
 #'
 #' @param path Character scalar. Path to an `.exr` file.
+#' @param array Default `FALSE`. Return a 4-layer RGBA array instead of a list.
 #' @return A list with elements `r`, `g`, `b`, `a` (numeric matrices), and
 #'   the integer dimensions `width`, `height`.
 #' @export
@@ -23,7 +24,7 @@ read_exr = function(path, array = FALSE) {
 	if (!array) {
 		return(exr)
 	} else {
-		exr_arr = array(data = 0, dim = c(wcg$width, wcg$height, 4))
+		exr_arr = array(data = 0, dim = c(exr$width, exr$height, 4))
 		exr_arr[,, 1] = exr$r
 		exr_arr[,, 2] = exr$g
 		exr_arr[,, 3] = exr$b
