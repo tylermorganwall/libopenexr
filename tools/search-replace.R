@@ -4,9 +4,23 @@ fn <- args[[1]]
 stringval = args[[2]]
 replace = args[[3]]
 txt <- readLines(fn)
-txt <- gsub(
-  stringval,
-  replace,
-  txt
+txt_new <- gsub(
+	stringval,
+	replace,
+	txt
 )
-writeLines(txt, fn)
+newlines = txt_new != txt
+if (sum(newlines) > 0) {
+	message(
+		sprintf("Replaced the following lines in '%s':\n", fn),
+		paste0(
+			sprintf(" Old: '%s'\n New: '%s'", txt[newlines], txt_new[newlines]),
+			collapse = "\n"
+		)
+	)
+} else {
+	message(
+		sprintf("Did not find any changes to make in '%s'", fn)
+	)
+}
+writeLines(txt_new, fn)

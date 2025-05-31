@@ -1,28 +1,29 @@
+# OpenEXR package Makevars
 CMAKE = @CMAKE@
 
 # Directories
-OPENEXR_DIR  = @PACKAGE_BASE_DIR@
-INST_DIR     = @PACKAGE_BASE_DIR@/inst
-LIB_DIR      = @PACKAGE_BASE_DIR@/inst/lib/@TARGET_ARCH@
-INCLUDE_DIR  = $(INST_DIR)/include/OpenEXR
-IMATH_LIB    = @IMATH_LIB_ARCH@
-STATIC_LIB   = $(LIB_DIR)/libOpenEXR-3_4.a
-DEFLATE_LIB  = @DEFLATE_LIB_ARCH@
+OPENEXR_DIR = @PACKAGE_BASE_DIR@
+INST_DIR = @PACKAGE_BASE_DIR@/inst
+LIB_DIR = @PACKAGE_BASE_DIR@/inst/lib/@TARGET_ARCH@
+INCLUDE_DIR = $(INST_DIR)/include/OpenEXR
+IMATH_LIB = @IMATH_LIB_ARCH@
+STATIC_LIB = $(LIB_DIR)/libOpenEXR-3_4.a
+DEFLATE_LIB = @DEFLATE_LIB_ARCH@
 
 # Set include paths
 PKG_CPPFLAGS = -I$(INCLUDE_DIR) -I$(OPENEXR_DIR)/include/OpenEXR -I@IMATH_INCLUDE_DIR@
-PKG_CFLAGS   = $(PKG_CPPFLAGS)
+PKG_CFLAGS = -I$(INCLUDE_DIR) -I$(OPENEXR_DIR)/include/OpenEXR -I@IMATH_INCLUDE_DIR@
 
-# Static libraries to link
-PKG_LIBS = -L$(LIB_DIR) -L$(IMATH_LIB) -lImath-3_2 \
-           -lOpenEXRUtil-3_4 -lOpenEXR-3_4 -lOpenEXRCore-3_4 -lIlmThread-3_4 -lIex-3_4 \
-           -L$(DEFLATE_LIB) -ldeflate
+# Static libraries we need to link against
+# Note that we're using the version suffix pattern that OpenEXR actually creates
+PKG_LIBS = -L$(LIB_DIR)  -L$(IMATH_LIB) -lImath-3_2 -lOpenEXRUtil-3_4 -lOpenEXR-3_4 -lOpenEXRCore-3_4 -lIlmThread-3_4 -lIex-3_4 -L$(DEFLATE_LIB) -ldeflate
 
 # Required for linking with static libraries
-CFLAGS   = $(CFLAGS) $(CPICFLAGS)
+CFLAGS = $(CFLAGS) $(CPICFLAGS)
 CXXFLAGS = $(CXXFLAGS) $(CXXPICFLAGS)
 
-all: $(OBJECTS)
+# Main target
+all: $(OBJECTS) 
 
 $(OBJECTS): $(STATIC_LIB)
 
@@ -30,8 +31,8 @@ $(STATIC_LIB):
 	cd $(OPENEXR_DIR) && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/OpenEXRCore/string.c" \
-	  "#    pragma GCC diagnostic" \
-	  "//#    pragma GCC diagnostic" && \
+	  "#[ ]+pragma.+" \
+	  "" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/OpenEXR/ImfInputPart.cpp" \
 	  "file->isOptimizationEnabled \(\)" \
@@ -58,7 +59,7 @@ $(STATIC_LIB):
 	  "//std::cerr" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/IlmThread/IlmThreadProcessGroup.h" \
-	  "if \(!ret\)" \
+	  "if \(!ret\).+" \
 	  "if \(!ret\) \{\}" && \
 	"$(R_HOME)/bin/Rscript" tools/remove_stderr.R \
 	  "@PACKAGE_BASE_DIR@/src/OpenEXR/" && \

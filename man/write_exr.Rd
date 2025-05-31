@@ -23,3 +23,12 @@ None.
 \description{
 Save RGBA numeric matrices to an OpenEXR file (32‑bit float, ZIP compression).
 }
+\examples{
+#Write the included data to an EXR file
+tmpfile = tempfile(fileext = ".exr")
+write_exr(tmpfile,
+          widecolorgamut[,,1],
+          widecolorgamut[,,2],
+          widecolorgamut[,,3],
+          widecolorgamut[,,4])
+}

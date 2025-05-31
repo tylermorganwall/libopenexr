@@ -12,3 +12,6 @@ src/Makevars
 src/OpenEXR/build
 config.status
 config.log
+autom4te.cache
+configure~
+src/Makevars.win

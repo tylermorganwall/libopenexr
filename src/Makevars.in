@@ -31,8 +31,8 @@ $(STATIC_LIB):
 	cd $(OPENEXR_DIR) && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/OpenEXRCore/string.c" \
-	  "#    pragma GCC diagnostic" \
-	  "//#    pragma GCC diagnostic" && \
+	  "#[ ]+pragma.+" \
+	  "" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/OpenEXR/ImfInputPart.cpp" \
 	  "file->isOptimizationEnabled \(\)" \
@@ -59,7 +59,7 @@ $(STATIC_LIB):
 	  "//std::cerr" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/IlmThread/IlmThreadProcessGroup.h" \
-	  "if \(!ret\)" \
+	  "if \(!ret\).+" \
 	  "if \(!ret\) \{\}" && \
 	"$(R_HOME)/bin/Rscript" tools/remove_stderr.R \
 	  "@PACKAGE_BASE_DIR@/src/OpenEXR/" && \
