@@ -16,7 +16,7 @@ PKG_CFLAGS = -I$(INCLUDE_DIR) -I$(OPENEXR_DIR)/include/OpenEXR -I@IMATH_INCLUDE_
 
 # Static libraries we need to link against
 # Note that we're using the version suffix pattern that OpenEXR actually creates
-PKG_LIBS = -L"$(LIB_DIR)"  -L"$(IMATH_LIB)" -lImath-3_2 -lOpenEXRUtil-3_4 -lOpenEXR-3_4 -lOpenEXRCore-3_4 -lIlmThread-3_4 -lIex-3_4 -L"$(DEFLATE_LIB)" -ldeflate
+PKG_LIBS = -L$(LIB_DIR)  -L$(IMATH_LIB) -lImath-3_2 -lOpenEXRUtil-3_4 -lOpenEXR-3_4 -lOpenEXRCore-3_4 -lIlmThread-3_4 -lIex-3_4 -L$(DEFLATE_LIB) -ldeflate
 
 # Required for linking with static libraries
 CFLAGS = $(CFLAGS) $(CPICFLAGS)
