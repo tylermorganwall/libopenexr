@@ -66,7 +66,7 @@ $(STATIC_LIB):
 	  "fflush \(stderr\);" \
 	  ";" && \
 	"$(R_HOME)/bin/Rscript" tools/remove_stderr.R \
-	  "@PACKAGE_BASE_DIR@/src/OpenEXR/" && \
+	  "src/OpenEXR/" && \
 	cd $(OPENEXR_DIR)/src/OpenEXR/build && \
 	$(CMAKE) -C ../build/initial-cache.cmake .. && \
 	$(CMAKE) --build . --config Release && \
