@@ -98,7 +98,7 @@ $(STATIC_LIB):
 	inst/include/OpenEXR/IexConfig.h \
 	inst/include/OpenEXR/IlmThreadConfig.h \
 	inst/include/OpenEXR/IlmThreadProcessGroup.h \
-	inst/include/OpenEXR/OpenEXRConfig.h \
+	inst/include/OpenEXR/OpenEXRConfig.h
 
 clean: 
 	rm -rf @PACKAGE_BASE_DIR@/src/OpenEXR/build && 
