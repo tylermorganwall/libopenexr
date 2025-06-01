@@ -72,7 +72,7 @@ $(STATIC_LIB):
 	$(CMAKE) --build . --config Release && \
 	$(CMAKE) --install . --config Release && \
 	cd @PACKAGE_BASE_DIR@ && \
-	"$(R_HOME)/bin/Rscript" tools/fix-line-endings.R \ 
+	"$(R_HOME)/bin/Rscript" tools/fix-line-endings.R \
 	src/Makevars \
 	src/OpenEXR/build/Makefile \
 	src/OpenEXR/build/cmake/Makefile \
