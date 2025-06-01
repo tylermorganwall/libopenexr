@@ -33,12 +33,6 @@ configure_database <- local({
 	function() database
 })
 
-newline = if (.Platform$OS.type == "windows") "\r\n" else "\n"
-
-writeLines = function(...) {
-	base::writeLines(..., sep = newline)
-}
-
 #' @export
 print.configure_database <- function(x, ...) {
 	str.configure_database(x, ...)
