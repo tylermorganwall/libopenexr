@@ -39,8 +39,8 @@ $(STATIC_LIB):
 	  "true" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/OpenEXRCore/chunk.c" \
-	  "uint64_t     eptr = 0" \
-	  "uintptr_t     eptr = 0" && \
+	  "uint64_t	 eptr = 0" \
+	  "uintptr_t	 eptr = 0" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/cmake/OpenEXRConfig.h.in" \
 	  "\[\[deprecated \(msg\)\]\]" \
@@ -70,7 +70,35 @@ $(STATIC_LIB):
 	cd $(OPENEXR_DIR)/src/OpenEXR/build && \
 	$(CMAKE) -C ../build/initial-cache.cmake .. && \
 	$(CMAKE) --build . --config Release && \
-	$(CMAKE) --install . --config Release 
+	$(CMAKE) --install . --config Release && \
+	cd @PACKAGE_BASE_DIR@ && \
+	"$(R_HOME)/bin/Rscript" tools/fix-line-endings.R \ 
+	src/Makevars \
+	src/OpenEXR/build/Makefile \
+	src/OpenEXR/build/cmake/Makefile \
+	src/OpenEXR/build/src/lib/Iex/Makefile \
+	src/OpenEXR/build/src/lib/IlmThread/Makefile \
+	src/OpenEXR/build/src/lib/Makefile \
+	src/OpenEXR/build/src/lib/OpenEXR/Makefile \
+	src/OpenEXR/build/src/lib/OpenEXRCore/Makefile \
+	src/OpenEXR/build/src/lib/OpenEXRUtil/Makefile \
+	inst/include/Imath/ImathConfig.h \
+	src/OpenEXR/build/CMakeFiles/3.30.4/CompilerIdC/CMakeCCompilerId.c \
+	src/OpenEXR/build/CMakeFiles/3.30.4/CompilerIdCXX/CMakeCXXCompilerId.cpp \
+	src/OpenEXR/build/cmake/IexConfig.h \
+	src/OpenEXR/build/cmake/IexConfigInternal.h \
+	src/OpenEXR/build/cmake/IlmThreadConfig.h \
+	src/OpenEXR/build/cmake/OpenEXRConfig.h \
+	src/OpenEXR/build/cmake/OpenEXRConfigInternal.h \
+	src/OpenEXR/src/lib/IlmThread/IlmThreadProcessGroup.h \
+	src/OpenEXR/src/lib/OpenEXR/ImfInputPart.cpp \
+	src/OpenEXR/src/lib/OpenEXRCore/chunk.c \
+	src/OpenEXR/src/lib/OpenEXRCore/internal_structs.c \
+	src/OpenEXR/src/lib/OpenEXRCore/string.c \
+	inst/include/OpenEXR/IexConfig.h \
+	inst/include/OpenEXR/IlmThreadConfig.h \
+	inst/include/OpenEXR/IlmThreadProcessGroup.h \
+	inst/include/OpenEXR/OpenEXRConfig.h \
 
 clean: 
 	rm -rf @PACKAGE_BASE_DIR@/src/OpenEXR/build && 
