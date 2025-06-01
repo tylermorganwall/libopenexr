@@ -82,7 +82,6 @@ $(STATIC_LIB):
 	src/OpenEXR/build/src/lib/OpenEXR/Makefile \
 	src/OpenEXR/build/src/lib/OpenEXRCore/Makefile \
 	src/OpenEXR/build/src/lib/OpenEXRUtil/Makefile \
-	inst/include/Imath/ImathConfig.h \
 	src/OpenEXR/build/CMakeFiles/3.30.4/CompilerIdC/CMakeCCompilerId.c \
 	src/OpenEXR/build/CMakeFiles/3.30.4/CompilerIdCXX/CMakeCXXCompilerId.cpp \
 	src/OpenEXR/build/cmake/IexConfig.h \
