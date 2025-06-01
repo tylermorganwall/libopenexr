@@ -27,8 +27,7 @@ all: $(OBJECTS)
 
 $(OBJECTS): $(STATIC_LIB)
 
-$(STATIC_LIB): 
-	cd $(OPENEXR_DIR) && \
+$(STATIC_LIB): cd $(OPENEXR_DIR) && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/OpenEXRCore/string.c" \
 	  "#[ ]+pragma.+" \
