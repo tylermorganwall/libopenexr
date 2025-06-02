@@ -1,6 +1,6 @@
 Package: libopenexr
 Type: Package
-Title: Static Library and Headers for OpenEXR Image I/O
+Title: Static Library and Headers for 'OpenEXR' Image I/O
 Version: 3.4.0
 Authors@R:
     c(
@@ -90,7 +90,6 @@ Authors@R:
       person("Nick", "Rasmussen", role = c("ctb", "cph")),
       person("Nicolas", "Chauvet", role = c("ctb", "cph")),
       person("Niklas", "Hambüchen", role = c("ctb", "cph")),
-      person("", "OgreTransporter", role = c("ctb", "cph")),
       person("Owen", "Thompson", role = c("ctb", "cph")),
       person("Paul", "Schneider", role = c("ctb", "cph")),
       person("Peter", "Hillman", role = c("ctb", "cph")),
@@ -119,9 +118,10 @@ Authors@R:
       person("Yujie", "Shu", role = c("ctb", "cph")),
       person("Kevin", "Ushey", role = "cph")
     )
-Description: Provides the 'OpenEXR' static library and 'C++' headers needed
-    to link R packages against the 'OpenEXR' high-dynamic-range image I/O
-    library, along with a basic R interface to load 'EXR' images as arrays.
+Description: Provides the 'OpenEXR' static library (see <https://openexr.com/>)
+    and 'C++' headers needed to link R packages against the 'OpenEXR' 
+    high-dynamic-range image I/O library, along with a basic R interface to 
+    load 'EXR' images.
 Depends: R (>= 4.3.0)
 License: BSD_3_clause + file LICENSE
 LinkingTo: libimath, libdeflate
@@ -130,3 +130,4 @@ LazyData: true
 SystemRequirements: CMake, GNU make
 RoxygenNote: 7.3.2
 Biarch: TRUE
+BugReports: https://github.com/tylermorganwall/libopenexr/issues
