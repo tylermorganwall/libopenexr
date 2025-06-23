@@ -152,8 +152,6 @@ if (syswhich_cmake != "") {
 define(
 	PACKAGE_BASE_DIR = PACKAGE_BASE_DIR,
 	TARGET_ARCH = TARGET_ARCH,
-	CC_FULL = CC_FULL,
-	CXX_FULL = CXX_FULL,
 	CMAKE = CMAKE,
 	IMATH_INCLUDE_DIR = IMATH_INCLUDE_DIR,
 	IMATH_LIB_ARCH = IMATH_LIB_ARCH,
@@ -173,8 +171,6 @@ set(CMAKE_POSITION_INDEPENDENT_CODE ON CACHE BOOL "Position independent code")
 set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type")
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared libs")
 set(CMAKE_OSX_ARCHITECTURES "%s" CACHE STRING "Target architecture")}-",
-		CC_FULL,
-		CXX_FULL,
 		TARGET_ARCH
 	),
 	file_cache
