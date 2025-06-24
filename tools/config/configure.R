@@ -79,17 +79,24 @@ if (nzchar(pkgconfig_path)) {
 			c("--cflags", package_name),
 			stdout = TRUE
 		)
+		#Remove -I
+		if (substr(lib_include, 1, 2) == "-I") {
+			lib_include = substr(lib_include, 3, 1000)
+		}
 		message(
 			sprintf("*** configure: using include path '%s'", lib_include)
 		)
+
 		lib_link = system2(
 			pkgconfig_path,
 			c("--static", "--libs", package_name),
 			stdout = TRUE
 		)
-		message(
-			sprintf("*** configure: using link path '%s'", lib_link)
-		)
+		#Remove -L
+		if (substr(lib_link, 1, 2) == "-L") {
+			lib_link = substr(lib_link, 3, 1000)
+		}
+
 		LIB_INCLUDE_LINE = sprintf("LIB_INCLUDE = %s", lib_include)
 		LIB_LINK_LINE = sprintf("LIB_LINK = %s", lib_link)
 	}
