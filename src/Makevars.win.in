@@ -10,13 +10,22 @@ IMATH_LIB = @IMATH_LIB_ARCH@
 STATIC_LIB = $(LIB_DIR)/libOpenEXR-3_4.a
 DEFLATE_LIB = @DEFLATE_LIB_ARCH@
 
-# Set include paths
-PKG_CPPFLAGS = -I$(INCLUDE_DIR) -I$(OPENEXR_DIR)/include/OpenEXR -I@IMATH_INCLUDE_DIR@
-PKG_CFLAGS = -I$(INCLUDE_DIR) -I$(OPENEXR_DIR)/include/OpenEXR -I@IMATH_INCLUDE_DIR@
+@LIB_INCLUDE_ASSIGN@
+@LIB_LINK_ASSIGN@
 
-# Static libraries we need to link against
+# It is unlikely that a user will have this library installed, but check anyway to follow CRAN policy
 # Note that we're using the version suffix pattern that OpenEXR actually creates
-PKG_LIBS = -L$(LIB_DIR)  -L$(IMATH_LIB) -lImath-3_2 -lOpenEXRUtil-3_4 -lOpenEXR-3_4 -lOpenEXRCore-3_4 -lIlmThread-3_4 -lIex-3_4 -L$(DEFLATE_LIB) -ldeflate
+ifeq (@LIB_EXISTS@, FALSE)
+  # Set include paths from above
+  PKG_CPPFLAGS = -I$(INCLUDE_DIR) -I$(OPENEXR_DIR)/include/OpenEXR -I@IMATH_INCLUDE_DIR@
+  PKG_CFLAGS = -I$(INCLUDE_DIR) -I$(OPENEXR_DIR)/include/OpenEXR -I@IMATH_INCLUDE_DIR@
+  PKG_LIBS = -L$(LIB_DIR)  -L$(IMATH_LIB) -lImath-3_2 -lOpenEXRUtil-3_4 -lOpenEXR-3_4 -lOpenEXRCore-3_4 -lIlmThread-3_4 -lIex-3_4 -L$(DEFLATE_LIB) -ldeflate
+else
+  # LIB_INCLUDE/LIB_LINK already include -I/-L
+  PKG_CPPFLAGS = $(LIB_INCLUDE) -I$(OPENEXR_DIR)/include/OpenEXR -I@IMATH_INCLUDE_DIR@
+  PKG_CFLAGS = $(LIB_INCLUDE) -I$(OPENEXR_DIR)/include/OpenEXR -I@IMATH_INCLUDE_DIR@
+  PKG_LIBS = $(LIB_LINK)  -L$(IMATH_LIB) -lImath-3_2 -lOpenEXRUtil-3_4 -lOpenEXR-3_4 -lOpenEXRCore-3_4 -lIlmThread-3_4 -lIex-3_4 -L$(DEFLATE_LIB) -ldeflate
+endif
 
 # Required for linking with static libraries
 CFLAGS = $(CFLAGS) $(CPICFLAGS)
@@ -24,6 +33,7 @@ CXXFLAGS = $(CXXFLAGS) $(CXXPICFLAGS)
 
 # Main target
 all: $(OBJECTS) 
+
 
 $(OBJECTS): $(STATIC_LIB)
 

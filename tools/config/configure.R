@@ -82,10 +82,11 @@ if (nzchar(pkgconfig_path)) {
 				"\\s+"
 			)[[1]]
 
-			if (length(include_dirs) == 1) {
-				if (include_dirs == "") {
-					return("")
-				}
+			if (length(include_dirs) == 0) {
+				return("")
+			}
+			if (length(include_dirs) == 1 && include_dirs == "") {
+				return("")
 			}
 
 			return(
@@ -172,7 +173,10 @@ if (!lib_exists) {
 				"include"
 			)
 			if (nzchar(lib_include)) {
-				LIB_INCLUDE_ASSIGN = sprintf('LIB_INCLUDE = -I"%s"', lib_include) #This doesn't have -I yet
+				LIB_INCLUDE_ASSIGN = sprintf(
+					'LIB_INCLUDE = -I"%s"',
+					lib_include
+				) #This doesn't have -I yet
 			}
 			if (nzchar(lib_link)) {
 				LIB_LINK_ASSIGN = sprintf('LIB_LINK = -L"%s"', lib_link) #This doesn't have -L yet
@@ -206,6 +210,7 @@ define(
 	PACKAGE_BASE_DIR = PACKAGE_BASE_DIR,
 	TARGET_ARCH = TARGET_ARCH,
 	CMAKE = CMAKE,
+	LIB_EXISTS = as.character(lib_exists),
 	IMATH_INCLUDE_DIR = IMATH_INCLUDE_DIR,
 	IMATH_LIB_ARCH = IMATH_LIB_ARCH,
 	LIB_LINK_ASSIGN = LIB_LINK_ASSIGN,
