@@ -49,6 +49,7 @@ DEFLATE_LIB_ARCH = normalizePath(
 # Use pkg-config (if available) to find a system library
 package_name = "libopenexr"
 static_library_name = "libOpenEXR-3_4"
+static_lib_filename = sprintf("%s.a", static_library_name)
 
 package_version = "3.4.0"
 lib_system = ""
@@ -58,6 +59,7 @@ pkgconfig_path = Sys.which("pkg-config")
 lib_exists = FALSE
 LIB_INCLUDE_ASSIGN = ""
 LIB_LINK_ASSIGN = ""
+lib_link = ""
 
 if (nzchar(pkgconfig_path)) {
 	pc_status = system2(
@@ -103,6 +105,19 @@ if (nzchar(pkgconfig_path)) {
 				)
 			)
 		}
+		check_existence = function(lib_link_output, static_lib_filename) {
+			any(file.exists(file.path(
+				gsub(
+					pattern = "(-L)|('|\")",
+					"",
+					x = unlist(strsplit(
+						lib_link_output,
+						split = " "
+					))
+				),
+				static_lib_filename
+			)))
+		}
 
 		lib_include = quote_paths(
 			system2(
@@ -111,10 +126,6 @@ if (nzchar(pkgconfig_path)) {
 				stdout = TRUE
 			),
 			prefix = "-I"
-		)
-
-		message(
-			sprintf("*** configure: using include path '%s'", lib_include)
 		)
 
 		lib_link = quote_paths(
@@ -126,64 +137,41 @@ if (nzchar(pkgconfig_path)) {
 			prefix = "-L"
 		)
 
-		message(
-			sprintf(
-				"*** configure: using link path '%s'",
-				lib_link
-			)
-		)
-		if (nzchar(lib_include)) {
-			LIB_INCLUDE_ASSIGN = sprintf('LIB_INCLUDE = %s', lib_include) #This should already have -I
-		}
-		if (nzchar(lib_link)) {
-			LIB_LINK_ASSIGN = sprintf('LIB_LINK = %s', lib_link) #This should already have -L
+		if (!check_existence(lib_link, static_lib_filename)) {
+			lib_exists = FALSE
+		} else {
+			if (nzchar(lib_include)) {
+				message(
+					sprintf(
+						"*** configure: using include path '%s'",
+						lib_include
+					)
+				)
+				LIB_INCLUDE_ASSIGN = sprintf('LIB_INCLUDE = %s', lib_include) #This should already have -I
+			} else {
+				lib_exists = FALSE
+			}
+			if (nzchar(lib_link)) {
+				message(
+					sprintf(
+						"*** configure: using link path '%s'",
+						lib_link
+					)
+				)
+				LIB_LINK_ASSIGN = sprintf('LIB_LINK = %s', lib_link) #This should already have -L
+			} else {
+				message(sprintf(
+					"*** %s found by pkg-config, but returned no link directory--skipping",
+					package_name
+				))
+				lib_exists = FALSE
+			}
 		}
 	} else {
 		message(sprintf("*** %s not found by pkg-config", package_name))
 	}
 } else {
-	message("*** pkg-config not available, skipping to common locations")
-}
-
-if (!lib_exists) {
-	fallback_prefixes = c(
-		"/opt/R/arm64",
-		"/opt/R/x86_64",
-		"/opt/homebrew",
-		"/usr/local",
-		"/usr"
-	)
-
-	for (prefix in fallback_prefixes) {
-		lib_exists_check = file.exists(file.path(
-			prefix,
-			"lib",
-			sprintf("%s.a", static_library_name)
-		))
-		header_exists = dir.exists(file.path(prefix, "include", "OpenEXR"))
-
-		if (lib_exists_check && header_exists) {
-			lib_exists = TRUE
-			lib_link = file.path(
-				prefix,
-				"lib"
-			)
-			lib_include = file.path(
-				prefix,
-				"include"
-			)
-			if (nzchar(lib_include)) {
-				LIB_INCLUDE_ASSIGN = sprintf(
-					'LIB_INCLUDE = -I"%s"',
-					lib_include
-				) #This doesn't have -I yet
-			}
-			if (nzchar(lib_link)) {
-				LIB_LINK_ASSIGN = sprintf('LIB_LINK = -L"%s"', lib_link) #This doesn't have -L yet
-			}
-			break
-		}
-	}
+	message("*** pkg-config not available, building bundled version")
 }
 
 syswhich_cmake = Sys.which("cmake")

@@ -1,7 +1,7 @@
 Package: libopenexr
 Type: Package
 Title: Static Library and Headers for 'OpenEXR' Image I/O
-Version: 3.4.0-3
+Version: 3.4.0-4
 Authors@R:
     c(
       person(

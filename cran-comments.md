@@ -1,3 +1,7 @@
+## Fixes v3.4.0-4
+
+The previous version was removed due to a dependency on the libdeflate package, which has been restored. 
+
 ## Fixes v3.4.0-2
 
 This version fixes the issues with compiling on the CRAN 'blackswan' test environment, which resulted from failing to account for that build environment's use of aliases/symlinks to pass in the compiler cache tool 'ccache'. The prior version checked for 'ccache', but failed in the case where 'ccache' use was not explicit (as it called 'normalizePath()' after finding the compiler, which expanded the symlink):
