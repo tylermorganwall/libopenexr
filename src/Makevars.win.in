@@ -92,8 +92,8 @@ $(STATIC_LIB):
 	src/OpenEXR/build/src/lib/OpenEXR/Makefile \
 	src/OpenEXR/build/src/lib/OpenEXRCore/Makefile \
 	src/OpenEXR/build/src/lib/OpenEXRUtil/Makefile \
-	src/OpenEXR/build/CMakeFiles/3.30.4/CompilerIdC/CMakeCCompilerId.c \
-	src/OpenEXR/build/CMakeFiles/3.30.4/CompilerIdCXX/CMakeCXXCompilerId.cpp \
+	src/OpenEXR/build/CMakeFiles/*/CompilerIdC/CMakeCCompilerId.c \
+	src/OpenEXR/build/CMakeFiles/*/CompilerIdCXX/CMakeCXXCompilerId.cpp \
 	src/OpenEXR/build/cmake/IexConfig.h \
 	src/OpenEXR/build/cmake/IexConfigInternal.h \
 	src/OpenEXR/build/cmake/IlmThreadConfig.h \
