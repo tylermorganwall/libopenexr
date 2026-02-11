@@ -19,48 +19,40 @@ normalize_newlines = function(x) {
 	x
 }
 
+# Generic normalization: strip trailing whitespace at end-of-line
+normalize_eol_ws = function(x) {
+	gsub("[ \t]+(?=\n)", "", x, perl = TRUE)
+}
+
 detect_crlf = function(x) {
 	grepl("\r\n", x, fixed = TRUE)
+}
+
+write_all = function(path, txt, use_crlf) {
+	if (use_crlf) {
+		txt = gsub("\n", "\r\n", txt, fixed = TRUE)
+	}
+	con = file(path, open = "wb")
+	on.exit(close(con), add = TRUE)
+	writeBin(charToRaw(txt), con)
 }
 
 txt0 = read_all(fn)
 from0 = read_all(from_fn)
 to0 = read_all(to_fn)
 
-# Preserve the newline style of the file being patched
 use_crlf = detect_crlf(txt0)
 
-# Normalize for matching
-txt = normalize_newlines(txt0)
-from = normalize_newlines(from0)
+txt = normalize_eol_ws(normalize_newlines(txt0))
+from = normalize_eol_ws(normalize_newlines(from0))
 to = normalize_newlines(to0)
 
 pos = regexpr(from, txt, fixed = TRUE)[[1]]
 if (pos == -1) {
-	# Helpful debugging: show first mismatch context lengths without dumping entire blocks
-	stop(sprintf(
-		"Target block not found in '%s' (from_file='%s').\nLengths: txt=%d, from=%d\n",
-		fn,
-		from_fn,
-		nchar(txt),
-		nchar(from)
-	))
+	stop(sprintf("Target block not found in '%s' (from_file='%s')", fn, from_fn))
 }
 
 txt_new = sub(from, to, txt, fixed = TRUE)
+write_all(fn, txt_new, use_crlf)
 
-# Restore original newline convention
-if (use_crlf) {
-	txt_new = gsub("\n", "\r\n", txt_new, fixed = TRUE)
-}
-
-con = file(fn, open = "wb")
-on.exit(close(con), add = TRUE)
-writeBin(charToRaw(txt_new), con)
-
-message(sprintf(
-	"Replaced block in '%s' using '%s' -> '%s'",
-	fn,
-	from_fn,
-	to_fn
-))
+message(sprintf("Replaced block in '%s'", fn))
