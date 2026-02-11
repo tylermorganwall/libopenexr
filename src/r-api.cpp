@@ -8,12 +8,13 @@
 #include <ImfArray.h>
 #include <ImfRgbaFile.h>
 
-#include <ImfHeader.h>
-#include <ImfOutputFile.h>
 #include <ImfChannelList.h>
-#include <ImfFrameBuffer.h>
 #include <ImfCompression.h>
+#include <ImfFrameBuffer.h>
+#include <ImfHeader.h>
 #include <ImfInputFile.h>
+#include <ImfOutputFile.h>
+#include <vector>
 
 using namespace OPENEXR_IMF_NAMESPACE;
 using namespace IMATH_NAMESPACE;
