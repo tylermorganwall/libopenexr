@@ -49,3 +49,25 @@ jobs:
         with:
           upload-snapshots: true
           build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+      - uses: r-lib/actions/check-r-package@v2
+        with:
+          upload-snapshots: true
+          build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+      - name: Show install/check logs on failure
+        if: ${{ failure() }}
+        shell: bash
+        run: |
+          set +e
+          found=0
+          while IFS= read -r -d '' f; do
+            found=1
+            echo "::group::${f}"
+            # Strip CR on Windows so logs render cleanly
+            sed -e 's/\r$//' "${f}" || true
+            echo "::endgroup::"
+          done < <(find check -type f \( -name '00install.out' -o -name '00check.log' \) -print0)
+          if [ "${found}" -eq 0 ]; then
+            echo "No 00install.out / 00check.log found under ./check"
+            echo "Directory listing:"
+            find check -maxdepth 4 -type f -print 2>/dev/null || true
+          fi
