@@ -1,5 +1,0 @@
-ThreadPool::Data::Data (ThreadPoolProvider *p)
-    : _provider (p)
-{
-    // empty
-}

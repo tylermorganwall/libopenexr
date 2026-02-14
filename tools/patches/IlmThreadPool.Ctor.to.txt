@@ -1,8 +1,0 @@
-ThreadPool::Data::Data (ThreadPoolProvider *p)
-{
-#if defined(__cpp_lib_atomic_shared_ptr) && (__cpp_lib_atomic_shared_ptr >= 201711L)
-    _provider.store (ProviderPtr (p), std::memory_order_release);
-#else
-    _provider = ProviderPtr (p);
-#endif
-}

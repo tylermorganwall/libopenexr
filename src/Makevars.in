@@ -38,18 +38,6 @@ $(OBJECTS): $(STATIC_LIB)
 
 $(STATIC_LIB): 
 	cd $(OPENEXR_DIR) && \
-	"$(R_HOME)/bin/Rscript" tools/replace-block.R \
-	  "src/OpenEXR/src/lib/IlmThread/IlmThreadPool.cpp" \
-	  "tools/patches/IlmThreadPool.Data.from.txt" \
-	  "tools/patches/IlmThreadPool.Data.to.txt" && \
-	"$(R_HOME)/bin/Rscript" tools/replace-block.R \
-	  "src/OpenEXR/src/lib/IlmThread/IlmThreadPool.cpp" \
- 	  "tools/patches/IlmThreadPool.Ctor.from.txt" \
-	  "tools/patches/IlmThreadPool.Ctor.to.txt" && \
-	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
-	  "src/OpenEXR/src/lib/OpenEXRCore/string.c" \
-	  "#[ ]+pragma.+" \
-	  "" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/OpenEXR/ImfInputPart.cpp" \
 	  "file->isOptimizationEnabled \(\)" \
