@@ -4,6 +4,11 @@ path <- args[[1]]
 stringval = args[[2]]
 replace = args[[3]]
 is_dir = dir.exists(path)
+is_pragma_pattern = grepl(
+	"^\\^\\(#\\\\s\\*pragma (warning|GCC diagnostic)",
+	stringval,
+	perl = TRUE
+)
 
 files = if (is_dir) {
 	list.files(
@@ -19,10 +24,10 @@ files = if (is_dir) {
 changed_file_count = 0L
 for (fn in files) {
 	txt <- readLines(fn)
-	if (replace == "__COMMENT_MATCHED_LINE__") {
+	if (replace == "__COMMENT_MATCHED_LINE__" || is_pragma_pattern) {
 		matched = grepl(stringval, txt, perl = TRUE)
 		txt_new = txt
-		txt_new[matched] = paste0("// ", txt[matched])
+		txt_new[matched] = paste0("/* ", txt[matched], " */")
 	} else {
 		txt_new <- gsub(
 			stringval,
@@ -30,6 +35,13 @@ for (fn in files) {
 			txt,
 			perl = TRUE
 		)
+	}
+	if (any(txt_new == "/ /1")) {
+		stop(sprintf(
+			"Detected suspicious replacement '/ /1' in '%s' for pattern '%s'",
+			fn,
+			stringval
+		))
 	}
 	newlines = txt_new != txt
 	if (sum(newlines) > 0) {
