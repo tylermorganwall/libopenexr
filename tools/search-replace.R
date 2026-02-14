@@ -19,12 +19,18 @@ files = if (is_dir) {
 changed_file_count = 0L
 for (fn in files) {
 	txt <- readLines(fn)
-	txt_new <- gsub(
-		stringval,
-		replace,
-		txt,
-		perl = TRUE
-	)
+	if (replace == "__COMMENT_MATCHED_LINE__") {
+		matched = grepl(stringval, txt, perl = TRUE)
+		txt_new = txt
+		txt_new[matched] = paste0("// ", txt[matched])
+	} else {
+		txt_new <- gsub(
+			stringval,
+			replace,
+			txt,
+			perl = TRUE
+		)
+	}
 	newlines = txt_new != txt
 	if (sum(newlines) > 0) {
 		message(

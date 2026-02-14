@@ -74,11 +74,11 @@ $(STATIC_LIB):
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/" \
 	  "^(#\\s*pragma warning.*)$$" \
-	  "// \\1" && \
+	  "__COMMENT_MATCHED_LINE__" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/" \
 	  "^(#\\s*pragma GCC diagnostic.*)$$" \
-	  "// \\1" && \
+	  "__COMMENT_MATCHED_LINE__" && \
 	"$(R_HOME)/bin/Rscript" tools/remove_stderr.R \
 	  "src/OpenEXR/" && \
 	cd $(OPENEXR_DIR)/src/OpenEXR/build && \
