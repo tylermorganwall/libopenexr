@@ -27,7 +27,7 @@ for (fn in files) {
 	if (replace == "__COMMENT_MATCHED_LINE__" || is_pragma_pattern) {
 		matched = grepl(stringval, txt, perl = TRUE)
 		txt_new = txt
-		txt_new[matched] = paste0("/* ", txt[matched], " */")
+		txt_new[matched] = ""
 	} else {
 		txt_new <- gsub(
 			stringval,
