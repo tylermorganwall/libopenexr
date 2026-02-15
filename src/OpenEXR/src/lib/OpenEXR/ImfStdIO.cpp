@@ -51,8 +51,8 @@ make_ofstream (const char* filename)
 //     return new ofstream (filesystem::path (u8view.begin (), u8view.end ()),
 //                          ios_base::out | ios_base::binary);
 // #else
-std::filesystem::path p(filename);
-return new ofstream(p, ios_base::out | ios_base::binary);
+	std::filesystem::path p(filename);
+	return new ofstream(p, ios_base::out | ios_base::binary);
 // #endif
 }
 
