@@ -23,7 +23,7 @@ files = if (is_dir) {
 
 changed_file_count = 0L
 for (fn in files) {
-	txt <- readLines(fn)
+	txt <- readLines(fn, warn = FALSE)
 	if (replace == "__COMMENT_MATCHED_LINE__" || is_pragma_pattern) {
 		matched = grepl(stringval, txt, perl = TRUE)
 		txt_new = txt
@@ -53,8 +53,9 @@ for (fn in files) {
 			)
 		)
 		changed_file_count = changed_file_count + 1L
-		newline = if (.Platform$OS.type == "windows") "\r\n" else "\n"
-		writeLines(txt_new, fn, sep = newline)
+		con = file(fn, open = "wb")
+		writeLines(txt_new, con, sep = "\n", useBytes = TRUE)
+		close(con)
 	} else if (!is_dir) {
 		message(
 			sprintf("Did not find any changes to make in '%s'", fn)
