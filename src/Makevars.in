@@ -13,6 +13,21 @@ DEFLATE_LIB = @DEFLATE_LIB_ARCH@
 @LIB_INCLUDE_ASSIGN@
 @LIB_LINK_ASSIGN@
 
+UNAME_S := $(shell uname -s 2>/dev/null)
+LINUX_STDLIB_LINK :=
+LINUX_FORCE_LIBSTDCXX :=
+OPENEXR_CMAKE_STDLIB_ARGS :=
+
+CXX_CMD1 := $(notdir $(word 1,$(CXX)))
+CXX_CMD2 := $(notdir $(word 2,$(CXX)))
+
+ifeq ($(UNAME_S),Linux)
+  ifneq (,$(filter clang clang++,$(CXX_CMD1) $(CXX_CMD2)))
+    LINUX_FORCE_LIBSTDCXX := yes
+    LINUX_STDLIB_LINK := -stdlib=libstdc++
+  endif
+endif
+
 # It is unlikely that a user will have this library installed, but check anyway to follow CRAN policy
 # Note that we're using the version suffix pattern that OpenEXR actually creates
 ifeq (@LIB_EXISTS@, FALSE)
@@ -27,16 +42,31 @@ else
   PKG_LIBS = $(LIB_LINK) -lOpenEXRUtil-3_4 -lOpenEXR-3_4 -lOpenEXRCore-3_4 -lIlmThread-3_4 -lIex-3_4 -L$(IMATH_LIB) -lImath-3_2 -L$(DEFLATE_LIB) -ldeflate
 endif
 
+ifeq ($(LINUX_FORCE_LIBSTDCXX),yes)
+  # Remove libc++ if it sneaks in anywhere
+  PKG_CXXFLAGS := $(filter-out -stdlib=libc++,$(PKG_CXXFLAGS))
+  CXXFLAGS     := $(filter-out -stdlib=libc++,$(CXXFLAGS))
+  PKG_LIBS     := $(filter-out -stdlib=libc++,$(PKG_LIBS))
+
+  # Force libstdc++ for the final shared object link
+  PKG_CXXFLAGS += $(LINUX_STDLIB_LINK)
+  PKG_LIBS     += $(LINUX_STDLIB_LINK)
+  OPENEXR_CMAKE_STDLIB_ARGS := \
+    -D CMAKE_CXX_FLAGS=-fPIC\ -fvisibility=hidden\ -fvisibility-inlines-hidden\ -stdlib=libstdc++ \
+    -D CMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++ \
+    -D CMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++
+endif
+
 # Required for linking with static libraries
 CFLAGS = $(CFLAGS) $(CPICFLAGS)
 CXXFLAGS = $(CXXFLAGS) $(CXXPICFLAGS)
 
 # Main target
-all: $(OBJECTS) 
+all: $(OBJECTS)
 
 $(OBJECTS): $(STATIC_LIB)
 
-$(STATIC_LIB): 
+$(STATIC_LIB):
 	cd $(OPENEXR_DIR) && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/OpenEXR/ImfInputPart.cpp" \
@@ -82,13 +112,15 @@ $(STATIC_LIB):
 	  "@PACKAGE_BASE_DIR@/src/OpenEXR/" && \
 	cd $(OPENEXR_DIR)/src/OpenEXR/build && \
 	$(CMAKE) -C ../build/initial-cache.cmake \
+	  $(OPENEXR_CMAKE_COMPILER_ARGS) \
+	  $(OPENEXR_CMAKE_STDLIB_ARGS) \
 	  -D CMAKE_CXX_STANDARD=20 \
 	  -D OPENEXR_CXX_STANDARD=20 \
 	  .. && \
 	$(CMAKE) --build . --config Release && \
-	$(CMAKE) --install . --config Release 
+	$(CMAKE) --install . --config Release
 
-clean: 
-	rm -rf @PACKAGE_BASE_DIR@/src/OpenEXR/build && 
-	rm -rf @PACKAGE_BASE_DIR@/src/Makevars &&
-	rm -rf @PACKAGE_BASE_DIR@/src/Makevars.win
+clean:
+	rm -rf @PACKAGE_BASE_DIR@/src/OpenEXR/build
+	rm -f @PACKAGE_BASE_DIR@/src/Makevars
+	rm -f @PACKAGE_BASE_DIR@/src/Makevars.win
