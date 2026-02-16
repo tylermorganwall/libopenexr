@@ -19,23 +19,37 @@ LINUX_FORCE_LIBSTDCXX :=
 OPENEXR_CMAKE_STDLIB_ARGS :=
 OPENEXR_CMAKE_COMPILER_ARGS :=
 
+# Capture original toolchain values from R
+R_CC := $(strip $(CC))
+R_CXX := $(strip $(CXX))
+
+# Helper: strip ccache if present, then take the first token (the actual compiler path/name)
+R_CC_COMPILER := $(word 1,$(R_CC))
+R_CXX_COMPILER := $(word 1,$(R_CXX))
+ifeq ($(notdir $(R_CC_COMPILER)),ccache)
+  R_CC_COMPILER := $(word 2,$(R_CC))
+endif
+ifeq ($(notdir $(R_CXX_COMPILER)),ccache)
+  R_CXX_COMPILER := $(word 2,$(R_CXX))
+endif
+
+# Default CMake compiler args use the underlying compiler executable (not flags/wrappers)
+# This avoids CMake receiving "clang++ -stdlib=libc++" as a "compiler".
+OPENEXR_CMAKE_COMPILER_ARGS := -D CMAKE_C_COMPILER=$(R_CC_COMPILER) -D CMAKE_CXX_COMPILER=$(R_CXX_COMPILER)
+
 ifeq ($(UNAME_S),Linux)
-  # On CRAN Linux, R's CXX can be "clang++ ... -stdlib=libc++".
-  # Override the compiler command used for *this package*.
-  CXX := $(CXXSTD)
+  # On CRAN Linux, R's CXX can be "clang++ ... -stdlib=libc++" (libc++ ABI => std::__1 symbols).
+  # Keep R's compiler choice but remove any libc++ stdlib flags for this package.
+  PKG_CXXFLAGS := $(filter-out -stdlib=libc++,$(PKG_CXXFLAGS))
+  CXXFLAGS     := $(filter-out -stdlib=libc++,$(CXXFLAGS))
+  PKG_LIBS     := $(filter-out -stdlib=libc++,$(PKG_LIBS))
 
-  CXX_CMD1 := $(notdir $(word 1,$(CXX)))
-  CXX_CMD2 := $(notdir $(word 2,$(CXX)))
-
-  OPENEXR_CMAKE_COMPILER_ARGS := -D CMAKE_C_COMPILER=$(CC) -D CMAKE_CXX_COMPILER=$(CXX)
-
-  # If the (now overridden) compiler is clang, force libstdc++ (Linux only)
-  ifneq (,$(filter clang clang++,$(CXX_CMD1) $(CXX_CMD2)))
+  # If the actual compiler is clang, force libstdc++ (Linux only)
+  ifneq (,$(findstring clang,$(notdir $(R_CXX_COMPILER))))
     LINUX_FORCE_LIBSTDCXX := yes
     LINUX_STDLIB_LINK := -stdlib=libstdc++
   endif
 endif
-
 
 # It is unlikely that a user will have this library installed, but check anyway to follow CRAN policy
 # Note that we're using the version suffix pattern that OpenEXR actually creates
@@ -51,17 +65,12 @@ else
   PKG_LIBS = $(LIB_LINK) -lOpenEXRUtil-3_4 -lOpenEXR-3_4 -lOpenEXRCore-3_4 -lIlmThread-3_4 -lIex-3_4 -L$(IMATH_LIB) -lImath-3_2 -L$(DEFLATE_LIB) -ldeflate
 endif
 
-ifeq ($(UNAME_S),Linux)
-  # Always strip libc++ flags on Linux (they can appear via R config)
-  PKG_CXXFLAGS := $(filter-out -stdlib=libc++,$(PKG_CXXFLAGS))
-  CXXFLAGS     := $(filter-out -stdlib=libc++,$(CXXFLAGS))
-  PKG_LIBS     := $(filter-out -stdlib=libc++,$(PKG_LIBS))
-endif
-
 ifeq ($(LINUX_FORCE_LIBSTDCXX),yes)
   # Only needed when compiling/linking with clang on Linux
   PKG_CXXFLAGS += $(LINUX_STDLIB_LINK)
   PKG_LIBS     += $(LINUX_STDLIB_LINK)
+
+  # Ensure the vendored OpenEXR build also uses libstdc++ when clang is used on Linux
   OPENEXR_CMAKE_STDLIB_ARGS := \
     -D CMAKE_CXX_FLAGS=-fPIC\ -fvisibility=hidden\ -fvisibility-inlines-hidden\ -stdlib=libstdc++ \
     -D CMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++ \
