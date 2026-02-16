@@ -168,22 +168,22 @@ $(STATIC_LIB):
 	  "src/OpenEXR/" \
 	  "^(#\\s*pragma warning.*)$$" \
 	  "__COMMENT_MATCHED_LINE__" && \
-	  "$(R_HOME)/bin/Rscript" tools/search-replace.R \
-	  "src/OpenEXR/CMakeLists.txt" \
-	  "add_subdirectory\\(src/bin\\)" \
-	  "if(EXISTS \"\\$\\{CMAKE_CURRENT_SOURCE_DIR\\}/src/bin\")\n  add_subdirectory(src/bin)\nendif()" && \
-	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
-	  "src/OpenEXR/CMakeLists.txt" \
-	  "add_subdirectory\\(src/examples\\)" \
-	  "if(EXISTS \"\\$\\{CMAKE_CURRENT_SOURCE_DIR\\}/src/examples\")\n  add_subdirectory(src/examples)\nendif()" && \
-	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
-	  "src/OpenEXR/CMakeLists.txt" \
-	  "add_subdirectory\\(src/test\\)" \
-	  "if(EXISTS \"\\$\\{CMAKE_CURRENT_SOURCE_DIR\\}/src/test\")\n  add_subdirectory(src/test)\nendif()" && \
-	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
-	  "src/OpenEXR/CMakeLists.txt" \
-	  "add_subdirectory\\(website/src\\)" \
-	  "if(EXISTS \"\\$\\{CMAKE_CURRENT_SOURCE_DIR\\}/website/src\")\n  add_subdirectory(website/src)\nendif()" && \
+  "$(R_HOME)/bin/Rscript" tools/search-replace.R \
+    "src/OpenEXR/CMakeLists.txt" \
+    "add_subdirectory\\(src/bin\\)" \
+    "# add_subdirectory(src/bin)  # disabled in CRAN vendor tree" && \
+  "$(R_HOME)/bin/Rscript" tools/search-replace.R \
+    "src/OpenEXR/CMakeLists.txt" \
+    "add_subdirectory\\(src/examples\\)" \
+    "# add_subdirectory(src/examples)  # disabled in CRAN vendor tree" && \
+  "$(R_HOME)/bin/Rscript" tools/search-replace.R \
+    "src/OpenEXR/CMakeLists.txt" \
+    "add_subdirectory\\(src/test\\)" \
+    "# add_subdirectory(src/test)  # disabled in CRAN vendor tree" && \
+  "$(R_HOME)/bin/Rscript" tools/search-replace.R \
+    "src/OpenEXR/CMakeLists.txt" \
+    "add_subdirectory\\(website/src\\)" \
+    "# add_subdirectory(website/src)  # disabled in CRAN vendor tree" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/" \
 	  "^(#\\s*pragma GCC diagnostic.*)$$" \
