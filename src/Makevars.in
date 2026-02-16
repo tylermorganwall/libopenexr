@@ -20,8 +20,31 @@ UNAME_S := $(shell uname -s 2>/dev/null)
 # ----------------------------
 OPENEXR_BUILD_DIR := $(OPENEXR_DIR)/src/OpenEXR/build
 
-CC_BIN  := $(word 1,$(CC))
-CXX_BIN := $(word 1,$(if $(CXX20),$(CXX20),$(CXX)))
+# FIX: CMake package config directories for deps (were referenced but not defined)
+IMATH_CMAKE_DIR := $(IMATH_LIB)/cmake/Imath
+DEFLATE_CMAKE_DIR := $(DEFLATE_LIB)/cmake/libdeflate
+
+# FIX: choose compiler "binary" robustly (strip ccache if present)
+CC_RAW  := $(CC)
+CXX_RAW := $(if $(CXX20),$(CXX20),$(CXX))
+
+CC_BIN1  := $(word 1,$(CC_RAW))
+CC_BIN2  := $(word 2,$(CC_RAW))
+CXX_BIN1 := $(word 1,$(CXX_RAW))
+CXX_BIN2 := $(word 2,$(CXX_RAW))
+
+ifeq ($(notdir $(CC_BIN1)),ccache)
+  CC_BIN := $(CC_BIN2)
+else
+  CC_BIN := $(CC_BIN1)
+endif
+
+ifeq ($(notdir $(CXX_BIN1)),ccache)
+  CXX_BIN := $(CXX_BIN2)
+else
+  CXX_BIN := $(CXX_BIN1)
+endif
+
 CXX_BASENAME := $(notdir $(CXX_BIN))
 
 OPENEXR_CMAKE_COMPILER_ARGS :=
@@ -41,15 +64,15 @@ ifeq ($(UNAME_S),Linux)
   # Also ensure the *wrapper* (r-api.cpp) is not compiled/linked with libc++.
   # R on Linux can inject -stdlib=libc++ into CXX/CXX20/SHLIB_CXXLD.
   strip_libcxx = $(filter-out -stdlib=libc++,$(1))
-  CXX          := $(call strip_libcxx,$(CXX))
-  CXX11        := $(call strip_libcxx,$(CXX11))
-  CXX14        := $(call strip_libcxx,$(CXX14))
-  CXX17        := $(call strip_libcxx,$(CXX17))
-  CXX20        := $(call strip_libcxx,$(CXX20))
-  SHLIB_CXXLD  := $(call strip_libcxx,$(SHLIB_CXXLD))
+  CXX           := $(call strip_libcxx,$(CXX))
+  CXX11         := $(call strip_libcxx,$(CXX11))
+  CXX14         := $(call strip_libcxx,$(CXX14))
+  CXX17         := $(call strip_libcxx,$(CXX17))
+  CXX20         := $(call strip_libcxx,$(CXX20))
+  SHLIB_CXXLD   := $(call strip_libcxx,$(SHLIB_CXXLD))
   SHLIB_CXX20LD := $(call strip_libcxx,$(SHLIB_CXX20LD))
-  CXXFLAGS     := $(call strip_libcxx,$(CXXFLAGS))
-  PKG_CXXFLAGS := $(call strip_libcxx,$(PKG_CXXFLAGS))
+  CXXFLAGS      := $(call strip_libcxx,$(CXXFLAGS))
+  PKG_CXXFLAGS  := $(call strip_libcxx,$(PKG_CXXFLAGS))
 endif
 
 # ----------------------------
@@ -81,6 +104,24 @@ endif
 # Required for linking with static libraries
 CFLAGS = $(CFLAGS) $(CPICFLAGS)
 CXXFLAGS = $(CXXFLAGS) $(CXXPICFLAGS)
+
+OPENEXR_CMAKE_FEATURE_ARGS := \
+  -D OPENEXR_BUILD_TOOLS=OFF \
+  -D OPENEXR_BUILD_EXAMPLES=OFF \
+  -D BUILD_TESTING=OFF \
+  -D OPENEXR_TEST_LIBRARIES=OFF \
+  -D OPENEXR_TEST_TOOLS=OFF \
+  -D OPENEXR_TEST_PYTHON=OFF \
+  -D BUILD_WEBSITE=OFF \
+  -D OPENEXR_BUILD_PYTHON=OFF
+
+OPENEXR_CMAKE_DEPS_ARGS := \
+  -D Imath_DIR=$(IMATH_CMAKE_DIR) \
+  -D libdeflate_DIR=$(DEFLATE_CMAKE_DIR) \
+  -D OPENEXR_FORCE_INTERNAL_IMATH=OFF \
+  -D OPENEXR_FORCE_INTERNAL_DEFLATE=OFF
+
+CLANG_FORMAT_FILE := $(OPENEXR_DIR)/src/OpenEXR/.clang-format
 
 # ----------------------------
 # Targets
@@ -135,10 +176,13 @@ $(STATIC_LIB):
 	  "@PACKAGE_BASE_DIR@/src/OpenEXR/" && \
 	rm -rf $(OPENEXR_BUILD_DIR) && \
 	mkdir -p $(OPENEXR_BUILD_DIR) && \
+	test -f "$(CLANG_FORMAT_FILE)" || printf "BasedOnStyle: LLVM\nIndentWidth: 4\n" > "$(CLANG_FORMAT_FILE)" && \
 	cd $(OPENEXR_BUILD_DIR) && \
 	$(CMAKE) -C ../build/initial-cache.cmake \
 	  $(OPENEXR_CMAKE_COMPILER_ARGS) \
 	  $(OPENEXR_CMAKE_STDLIB_ARGS) \
+	  $(OPENEXR_CMAKE_FEATURE_ARGS) \
+	  $(OPENEXR_CMAKE_DEPS_ARGS) \
 	  -D CMAKE_CXX_STANDARD=20 \
 	  -D OPENEXR_CXX_STANDARD=20 \
 	  .. && \
