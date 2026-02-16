@@ -16,6 +16,10 @@
 #include <ImfOutputFile.h>
 #include <vector>
 
+#if defined(__linux__) && defined(_LIBCPP_VERSION)
+#error "libopenexr: libc++ detected on Linux (std::__1 ABI). This will fail to load on CRAN Linux; build with libstdc++."
+#endif
+
 using namespace OPENEXR_IMF_NAMESPACE;
 using namespace IMATH_NAMESPACE;
 
