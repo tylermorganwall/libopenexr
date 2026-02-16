@@ -13,6 +13,49 @@ DEFLATE_LIB = @DEFLATE_LIB_ARCH@
 @LIB_INCLUDE_ASSIGN@
 @LIB_LINK_ASSIGN@
 
+UNAME_S := $(shell uname -s 2>/dev/null)
+
+# ----------------------------
+# Toolchain / CMake arguments
+# ----------------------------
+OPENEXR_BUILD_DIR := $(OPENEXR_DIR)/src/OpenEXR/build
+
+CC_BIN  := $(word 1,$(CC))
+CXX_BIN := $(word 1,$(if $(CXX20),$(CXX20),$(CXX)))
+CXX_BASENAME := $(notdir $(CXX_BIN))
+
+OPENEXR_CMAKE_COMPILER_ARGS :=
+OPENEXR_CMAKE_STDLIB_ARGS :=
+
+ifeq ($(UNAME_S),Linux)
+  OPENEXR_CMAKE_COMPILER_ARGS := -D CMAKE_C_COMPILER=$(CC_BIN) -D CMAKE_CXX_COMPILER=$(CXX_BIN)
+
+  # If clang, force libstdc++ at the CMake level so it does not cache libc++
+  ifneq (,$(findstring clang,$(CXX_BASENAME)))
+    OPENEXR_CMAKE_STDLIB_ARGS := \
+      -D CMAKE_CXX_COMPILER_ARG1=-stdlib=libstdc++ \
+      -D CMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++ \
+      -D CMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++
+  endif
+
+  # Also ensure the *wrapper* (r-api.cpp) is not compiled/linked with libc++.
+  # R on Linux can inject -stdlib=libc++ into CXX/CXX20/SHLIB_CXXLD.
+  strip_libcxx = $(filter-out -stdlib=libc++,$(1))
+  CXX          := $(call strip_libcxx,$(CXX))
+  CXX11        := $(call strip_libcxx,$(CXX11))
+  CXX14        := $(call strip_libcxx,$(CXX14))
+  CXX17        := $(call strip_libcxx,$(CXX17))
+  CXX20        := $(call strip_libcxx,$(CXX20))
+  SHLIB_CXXLD  := $(call strip_libcxx,$(SHLIB_CXXLD))
+  SHLIB_CXX20LD := $(call strip_libcxx,$(SHLIB_CXX20LD))
+  CXXFLAGS     := $(call strip_libcxx,$(CXXFLAGS))
+  PKG_CXXFLAGS := $(call strip_libcxx,$(PKG_CXXFLAGS))
+endif
+
+# ----------------------------
+# Package flags / link flags
+# ----------------------------
+
 # It is unlikely that a user will have this library installed, but check anyway to follow CRAN policy
 # Note that we're using the version suffix pattern that OpenEXR actually creates
 ifeq (@LIB_EXISTS@, FALSE)
@@ -27,46 +70,21 @@ else
   PKG_LIBS = $(LIB_LINK) -lOpenEXRUtil-3_4 -lOpenEXR-3_4 -lOpenEXRCore-3_4 -lIlmThread-3_4 -lIex-3_4 -L$(IMATH_LIB) -lImath-3_2 -L$(DEFLATE_LIB) -ldeflate
 endif
 
+# Make unresolved symbols a link-time error (so you fail at build time, not dyn.load time)
 ifeq ($(UNAME_S),Linux)
   PKG_LIBS += -Wl,--no-undefined -Wl,-z,defs
 endif
-
 ifeq ($(UNAME_S),Darwin)
   PKG_LIBS += -Wl,-undefined,error
-endif
-
-UNAME_S := $(shell uname -s 2>/dev/null)
-
-ifeq ($(UNAME_S),Linux)
-  strip_libcxx = $(filter-out -stdlib=libc++,$(1))
-
-  # Detect clang anywhere in the active C++ toolchain variables
-  CLANG_HIT := $(findstring clang,$(CXX) $(CXX11) $(CXX14) $(CXX17) $(CXX20) $(SHLIB_CXXLD) $(SHLIB_CXX20LD))
-
-  ifneq ($(strip $(CLANG_HIT)),)
-    override CXX   := $(call strip_libcxx,$(CXX))   -stdlib=libstdc++
-    override CXX11 := $(call strip_libcxx,$(CXX11)) -stdlib=libstdc++
-    override CXX14 := $(call strip_libcxx,$(CXX14)) -stdlib=libstdc++
-    override CXX17 := $(call strip_libcxx,$(CXX17)) -stdlib=libstdc++
-    override CXX20 := $(call strip_libcxx,$(CXX20)) -stdlib=libstdc++
-
-    override SHLIB_CXXLD   := $(call strip_libcxx,$(SHLIB_CXXLD))   -stdlib=libstdc++
-    override SHLIB_CXX11LD := $(call strip_libcxx,$(SHLIB_CXX11LD)) -stdlib=libstdc++
-    override SHLIB_CXX14LD := $(call strip_libcxx,$(SHLIB_CXX14LD)) -stdlib=libstdc++
-    override SHLIB_CXX17LD := $(call strip_libcxx,$(SHLIB_CXX17LD)) -stdlib=libstdc++
-    override SHLIB_CXX20LD := $(call strip_libcxx,$(SHLIB_CXX20LD)) -stdlib=libstdc++
-
-    override CXXFLAGS     := $(call strip_libcxx,$(CXXFLAGS))     -stdlib=libstdc++
-    override PKG_CXXFLAGS := $(call strip_libcxx,$(PKG_CXXFLAGS)) -stdlib=libstdc++
-    override PKG_LIBS     := $(call strip_libcxx,$(PKG_LIBS))     -stdlib=libstdc++
-  endif
 endif
 
 # Required for linking with static libraries
 CFLAGS = $(CFLAGS) $(CPICFLAGS)
 CXXFLAGS = $(CXXFLAGS) $(CXXPICFLAGS)
 
-# Main target
+# ----------------------------
+# Targets
+# ----------------------------
 all: $(OBJECTS)
 
 $(OBJECTS): $(STATIC_LIB)
@@ -115,8 +133,12 @@ $(STATIC_LIB):
 	  "__COMMENT_MATCHED_LINE__" && \
 	"$(R_HOME)/bin/Rscript" tools/remove_stderr.R \
 	  "@PACKAGE_BASE_DIR@/src/OpenEXR/" && \
-	cd $(OPENEXR_DIR)/src/OpenEXR/build && \
+	rm -rf $(OPENEXR_BUILD_DIR) && \
+	mkdir -p $(OPENEXR_BUILD_DIR) && \
+	cd $(OPENEXR_BUILD_DIR) && \
 	$(CMAKE) -C ../build/initial-cache.cmake \
+	  $(OPENEXR_CMAKE_COMPILER_ARGS) \
+	  $(OPENEXR_CMAKE_STDLIB_ARGS) \
 	  -D CMAKE_CXX_STANDARD=20 \
 	  -D OPENEXR_CXX_STANDARD=20 \
 	  .. && \
@@ -124,6 +146,6 @@ $(STATIC_LIB):
 	$(CMAKE) --install . --config Release
 
 clean:
-	rm -rf @PACKAGE_BASE_DIR@/src/OpenEXR/build &&
-	rm -rf @PACKAGE_BASE_DIR@/src/Makevars &&
+	rm -rf @PACKAGE_BASE_DIR@/src/OpenEXR/build
+	rm -rf @PACKAGE_BASE_DIR@/src/Makevars
 	rm -rf @PACKAGE_BASE_DIR@/src/Makevars.win
