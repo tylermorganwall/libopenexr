@@ -35,6 +35,23 @@ ifeq ($(UNAME_S),Darwin)
   PKG_LIBS += -Wl,-undefined,error
 endif
 
+UNAME_S := $(shell uname -s 2>/dev/null)
+
+ifeq ($(UNAME_S),Linux)
+  # Strip libc++ wherever it can appear
+  CXX       := $(filter-out -stdlib=libc++,$(CXX))
+  CXXFLAGS  := $(filter-out -stdlib=libc++,$(CXXFLAGS))
+  PKG_CXXFLAGS := $(filter-out -stdlib=libc++,$(PKG_CXXFLAGS))
+  PKG_LIBS  := $(filter-out -stdlib=libc++,$(PKG_LIBS))
+
+  # If building with clang, force libstdc++
+  ifneq (,$(findstring clang,$(notdir $(word 1,$(CXX)))))
+    CXXFLAGS     += -stdlib=libstdc++
+    PKG_CXXFLAGS += -stdlib=libstdc++
+    PKG_LIBS     += -stdlib=libstdc++
+  endif
+endif
+
 # Required for linking with static libraries
 CFLAGS = $(CFLAGS) $(CPICFLAGS)
 CXXFLAGS = $(CXXFLAGS) $(CXXPICFLAGS)
