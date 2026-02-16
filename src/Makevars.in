@@ -38,17 +38,36 @@ endif
 UNAME_S := $(shell uname -s 2>/dev/null)
 
 ifeq ($(UNAME_S),Linux)
-  # Strip libc++ wherever it can appear
-  CXX       := $(filter-out -stdlib=libc++,$(CXX))
-  CXXFLAGS  := $(filter-out -stdlib=libc++,$(CXXFLAGS))
-  PKG_CXXFLAGS := $(filter-out -stdlib=libc++,$(PKG_CXXFLAGS))
-  PKG_LIBS  := $(filter-out -stdlib=libc++,$(PKG_LIBS))
+  # Helper: remove libc++ from any token list
+  strip_libcxx = $(filter-out -stdlib=libc++,$(1))
 
-  # If building with clang, force libstdc++
-  ifneq (,$(findstring clang,$(notdir $(word 1,$(CXX)))))
-    CXXFLAGS     += -stdlib=libstdc++
-    PKG_CXXFLAGS += -stdlib=libstdc++
-    PKG_LIBS     += -stdlib=libstdc++
+  # Detect clang in the underlying command (covers "clang++-16", "ccache clang++-16", etc.)
+  CXX_CMD1 := $(notdir $(word 1,$(CXX)))
+  CXX_CMD2 := $(notdir $(word 2,$(CXX)))
+  IS_CLANG := $(filter clang clang++,$(CXX_CMD1) $(CXX_CMD2))
+  ifeq ($(strip $(IS_CLANG)),)
+    IS_CLANG := $(findstring clang,$(CXX_CMD1)$(CXX_CMD2))
+  endif
+
+  ifneq ($(strip $(IS_CLANG)),)
+    # Sanitize compile drivers that R may use
+    CXX   := $(call strip_libcxx,$(CXX))   -stdlib=libstdc++
+    CXX11 := $(call strip_libcxx,$(CXX11)) -stdlib=libstdc++
+    CXX14 := $(call strip_libcxx,$(CXX14)) -stdlib=libstdc++
+    CXX17 := $(call strip_libcxx,$(CXX17)) -stdlib=libstdc++
+    CXX20 := $(call strip_libcxx,$(CXX20)) -stdlib=libstdc++
+
+    # Sanitize link drivers too (this is commonly where the bad stdlib choice persists)
+    SHLIB_CXXLD   := $(call strip_libcxx,$(SHLIB_CXXLD))   -stdlib=libstdc++
+    SHLIB_CXX11LD := $(call strip_libcxx,$(SHLIB_CXX11LD)) -stdlib=libstdc++
+    SHLIB_CXX14LD := $(call strip_libcxx,$(SHLIB_CXX14LD)) -stdlib=libstdc++
+    SHLIB_CXX17LD := $(call strip_libcxx,$(SHLIB_CXX17LD)) -stdlib=libstdc++
+    SHLIB_CXX20LD := $(call strip_libcxx,$(SHLIB_CXX20LD)) -stdlib=libstdc++
+
+    # Also strip libc++ if it shows up in flags; then add libstdc++ explicitly
+    CXXFLAGS     := $(call strip_libcxx,$(CXXFLAGS))     -stdlib=libstdc++
+    PKG_CXXFLAGS := $(call strip_libcxx,$(PKG_CXXFLAGS)) -stdlib=libstdc++
+    PKG_LIBS     := $(call strip_libcxx,$(PKG_LIBS))     -stdlib=libstdc++
   endif
 endif
 
