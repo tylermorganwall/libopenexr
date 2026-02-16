@@ -10,49 +10,8 @@ IMATH_LIB = @IMATH_LIB_ARCH@
 STATIC_LIB = $(LIB_DIR)/libOpenEXR-3_4.a
 DEFLATE_LIB = @DEFLATE_LIB_ARCH@
 
-IMATH_CMAKE_DIR := $(IMATH_LIB)/cmake/Imath
-DEFLATE_CMAKE_DIR := $(DEFLATE_LIB)/cmake/libdeflate
-
 @LIB_INCLUDE_ASSIGN@
 @LIB_LINK_ASSIGN@
-
-UNAME_S := $(shell uname -s 2>/dev/null)
-LINUX_STDLIB_LINK :=
-LINUX_FORCE_LIBSTDCXX :=
-OPENEXR_CMAKE_STDLIB_ARGS :=
-OPENEXR_CMAKE_COMPILER_ARGS :=
-
-# Capture original toolchain values from R
-R_CC := $(strip $(CC))
-R_CXX := $(strip $(CXX))
-
-# Helper: strip ccache if present, then take the first token (the actual compiler path/name)
-R_CC_COMPILER := $(word 1,$(R_CC))
-R_CXX_COMPILER := $(word 1,$(R_CXX))
-ifeq ($(notdir $(R_CC_COMPILER)),ccache)
-  R_CC_COMPILER := $(word 2,$(R_CC))
-endif
-ifeq ($(notdir $(R_CXX_COMPILER)),ccache)
-  R_CXX_COMPILER := $(word 2,$(R_CXX))
-endif
-
-# Default CMake compiler args use the underlying compiler executable (not flags/wrappers)
-# This avoids CMake receiving "clang++ -stdlib=libc++" as a "compiler".
-OPENEXR_CMAKE_COMPILER_ARGS := -D CMAKE_C_COMPILER=$(R_CC_COMPILER) -D CMAKE_CXX_COMPILER=$(R_CXX_COMPILER)
-
-ifeq ($(UNAME_S),Linux)
-  # On CRAN Linux, R's CXX can be "clang++ ... -stdlib=libc++" (libc++ ABI => std::__1 symbols).
-  # Keep R's compiler choice but remove any libc++ stdlib flags for this package.
-  PKG_CXXFLAGS := $(filter-out -stdlib=libc++,$(PKG_CXXFLAGS))
-  CXXFLAGS     := $(filter-out -stdlib=libc++,$(CXXFLAGS))
-  PKG_LIBS     := $(filter-out -stdlib=libc++,$(PKG_LIBS))
-
-  # If the actual compiler is clang, force libstdc++ (Linux only)
-  ifneq (,$(findstring clang,$(notdir $(R_CXX_COMPILER))))
-    LINUX_FORCE_LIBSTDCXX := yes
-    LINUX_STDLIB_LINK := -stdlib=libstdc++
-  endif
-endif
 
 # It is unlikely that a user will have this library installed, but check anyway to follow CRAN policy
 # Note that we're using the version suffix pattern that OpenEXR actually creates
@@ -67,26 +26,6 @@ else
   PKG_CFLAGS = $(LIB_INCLUDE) -I$(OPENEXR_DIR)/include/OpenEXR -I@IMATH_INCLUDE_DIR@
   PKG_LIBS = $(LIB_LINK) -lOpenEXRUtil-3_4 -lOpenEXR-3_4 -lOpenEXRCore-3_4 -lIlmThread-3_4 -lIex-3_4 -L$(IMATH_LIB) -lImath-3_2 -L$(DEFLATE_LIB) -ldeflate
 endif
-
-ifeq ($(LINUX_FORCE_LIBSTDCXX),yes)
-  # Only needed when compiling/linking with clang on Linux
-  PKG_CXXFLAGS += $(LINUX_STDLIB_LINK)
-  PKG_LIBS     += $(LINUX_STDLIB_LINK)
-
-  # Ensure the vendored OpenEXR build also uses libstdc++ when clang is used on Linux
-  OPENEXR_CMAKE_STDLIB_ARGS := \
-    -D CMAKE_CXX_FLAGS=-fPIC\ -fvisibility=hidden\ -fvisibility-inlines-hidden\ -stdlib=libstdc++ \
-    -D CMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++ \
-    -D CMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++
-endif
-
-OPENEXR_CMAKE_FIND_ARGS := \
-  -D Imath_DIR=$(IMATH_CMAKE_DIR) \
-  -D libdeflate_DIR=$(DEFLATE_CMAKE_DIR) \
-  -D OPENEXR_BUILD_TOOLS=OFF \
-  -D OPENEXR_BUILD_EXAMPLES=OFF \
-  -D OPENEXR_BUILD_TESTS=OFF \
-  -D OPENEXR_BUILD_WEBSITE=OFF
 
 # Required for linking with static libraries
 CFLAGS = $(CFLAGS) $(CPICFLAGS)
@@ -143,9 +82,6 @@ $(STATIC_LIB):
 	  "@PACKAGE_BASE_DIR@/src/OpenEXR/" && \
 	cd $(OPENEXR_DIR)/src/OpenEXR/build && \
 	$(CMAKE) -C ../build/initial-cache.cmake \
-    $(OPENEXR_CMAKE_COMPILER_ARGS) \
-    $(OPENEXR_CMAKE_STDLIB_ARGS) \
-    $(OPENEXR_CMAKE_FIND_ARGS) \
 	  -D CMAKE_CXX_STANDARD=20 \
 	  -D OPENEXR_CXX_STANDARD=20 \
 	  .. && \
@@ -153,6 +89,6 @@ $(STATIC_LIB):
 	$(CMAKE) --install . --config Release
 
 clean:
-	rm -rf @PACKAGE_BASE_DIR@/src/OpenEXR/build
-	rm -f @PACKAGE_BASE_DIR@/src/Makevars
-	rm -f @PACKAGE_BASE_DIR@/src/Makevars.win
+	rm -rf @PACKAGE_BASE_DIR@/src/OpenEXR/build &&
+	rm -rf @PACKAGE_BASE_DIR@/src/Makevars &&
+	rm -rf @PACKAGE_BASE_DIR@/src/Makevars.win
