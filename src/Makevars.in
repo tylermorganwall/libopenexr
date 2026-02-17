@@ -61,18 +61,28 @@ ifeq ($(UNAME_S),Linux)
       -D CMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++
   endif
 
-  # Also ensure the *wrapper* (r-api.cpp) is not compiled/linked with libc++.
-  # R on Linux can inject -stdlib=libc++ into CXX/CXX20/SHLIB_CXXLD.
-  strip_libcxx = $(filter-out -stdlib=libc++,$(1))
-  CXX           := $(call strip_libcxx,$(CXX))
-  CXX11         := $(call strip_libcxx,$(CXX11))
-  CXX14         := $(call strip_libcxx,$(CXX14))
-  CXX17         := $(call strip_libcxx,$(CXX17))
-  CXX20         := $(call strip_libcxx,$(CXX20))
-  SHLIB_CXXLD   := $(call strip_libcxx,$(SHLIB_CXXLD))
-  SHLIB_CXX20LD := $(call strip_libcxx,$(SHLIB_CXX20LD))
-  CXXFLAGS      := $(call strip_libcxx,$(CXXFLAGS))
-  PKG_CXXFLAGS  := $(call strip_libcxx,$(PKG_CXXFLAGS))
+  # ---- FIX WRAPPER TOOLCHAIN: replace libc++ with libstdc++ in the *drivers* ----
+  replace_libcxx = $(subst -stdlib=libc++,-stdlib=libstdc++,$(1))
+  strip_libcxx   = $(filter-out -stdlib=libc++,$(1))
+
+  # Apply replacement to all relevant compile drivers
+  CXX   := $(call replace_libcxx,$(CXX))
+  CXX11 := $(call replace_libcxx,$(CXX11))
+  CXX14 := $(call replace_libcxx,$(CXX14))
+  CXX17 := $(call replace_libcxx,$(CXX17))
+  CXX20 := $(call replace_libcxx,$(CXX20))
+
+  # Apply replacement to all relevant shared-link drivers
+  SHLIB_CXXLD   := $(call replace_libcxx,$(SHLIB_CXXLD))
+  SHLIB_CXX11LD := $(call replace_libcxx,$(SHLIB_CXX11LD))
+  SHLIB_CXX14LD := $(call replace_libcxx,$(SHLIB_CXX14LD))
+  SHLIB_CXX17LD := $(call replace_libcxx,$(SHLIB_CXX17LD))
+  SHLIB_CXX20LD := $(call replace_libcxx,$(SHLIB_CXX20LD))
+
+  # Strip any remaining libc++ tokens from flags, then explicitly add libstdc++
+  CXXFLAGS      := $(call strip_libcxx,$(CXXFLAGS))      -stdlib=libstdc++
+  PKG_CXXFLAGS  := $(call strip_libcxx,$(PKG_CXXFLAGS))  -stdlib=libstdc++
+  PKG_LIBS      := $(call strip_libcxx,$(PKG_LIBS))      -stdlib=libstdc++
 endif
 
 # ----------------------------
@@ -219,5 +229,5 @@ $(STATIC_LIB):
 
 clean:
 	rm -rf $(OPENEXR_DIR)/src/OpenEXR/build-cran
-	rm -r @PACKAGE_BASE_DIR@/src/Makevars
-	rm -r @PACKAGE_BASE_DIR@/src/Makevars.win
+	rm -f @PACKAGE_BASE_DIR@/src/Makevars
+	rm -f @PACKAGE_BASE_DIR@/src/Makevars.win
