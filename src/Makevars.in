@@ -13,82 +13,6 @@ DEFLATE_LIB = @DEFLATE_LIB_ARCH@
 @LIB_INCLUDE_ASSIGN@
 @LIB_LINK_ASSIGN@
 
-UNAME_S := $(shell uname -s 2>/dev/null)
-
-# ----------------------------
-# Toolchain / CMake arguments
-# ----------------------------
-OPENEXR_BUILD_DIR := $(OPENEXR_DIR)/src/OpenEXR/build
-
-# FIX: CMake package config directories for deps (were referenced but not defined)
-IMATH_CMAKE_DIR := $(IMATH_LIB)/cmake/Imath
-DEFLATE_CMAKE_DIR := $(DEFLATE_LIB)/cmake/libdeflate
-
-# FIX: choose compiler "binary" robustly (strip ccache if present)
-CC_RAW  := $(CC)
-CXX_RAW := $(if $(CXX20),$(CXX20),$(CXX))
-
-CC_BIN1  := $(word 1,$(CC_RAW))
-CC_BIN2  := $(word 2,$(CC_RAW))
-CXX_BIN1 := $(word 1,$(CXX_RAW))
-CXX_BIN2 := $(word 2,$(CXX_RAW))
-
-ifeq ($(notdir $(CC_BIN1)),ccache)
-  CC_BIN := $(CC_BIN2)
-else
-  CC_BIN := $(CC_BIN1)
-endif
-
-ifeq ($(notdir $(CXX_BIN1)),ccache)
-  CXX_BIN := $(CXX_BIN2)
-else
-  CXX_BIN := $(CXX_BIN1)
-endif
-
-CXX_BASENAME := $(notdir $(CXX_BIN))
-
-OPENEXR_CMAKE_COMPILER_ARGS :=
-OPENEXR_CMAKE_STDLIB_ARGS :=
-
-ifeq ($(UNAME_S),Linux)
-  OPENEXR_CMAKE_COMPILER_ARGS := -D CMAKE_C_COMPILER=$(CC_BIN) -D CMAKE_CXX_COMPILER=$(CXX_BIN)
-
-  # If clang, force libstdc++ at the CMake level so it does not cache libc++
-  ifneq (,$(findstring clang,$(CXX_BASENAME)))
-    OPENEXR_CMAKE_STDLIB_ARGS := \
-      -D CMAKE_CXX_COMPILER_ARG1=-stdlib=libstdc++ \
-      -D CMAKE_SHARED_LINKER_FLAGS=-stdlib=libstdc++ \
-      -D CMAKE_EXE_LINKER_FLAGS=-stdlib=libstdc++
-  endif
-
-  # ---- FIX WRAPPER TOOLCHAIN: replace libc++ with libstdc++ in the *drivers* ----
-  replace_libcxx = $(subst -stdlib=libc++,-stdlib=libstdc++,$(1))
-  strip_libcxx   = $(filter-out -stdlib=libc++,$(1))
-
-  # Apply replacement to all relevant compile drivers
-  CXX   := $(call replace_libcxx,$(CXX))
-  CXX11 := $(call replace_libcxx,$(CXX11))
-  CXX14 := $(call replace_libcxx,$(CXX14))
-  CXX17 := $(call replace_libcxx,$(CXX17))
-  CXX20 := $(call replace_libcxx,$(CXX20))
-
-  # Apply replacement to all relevant shared-link drivers
-  SHLIB_CXXLD   := $(call replace_libcxx,$(SHLIB_CXXLD))
-  SHLIB_CXX11LD := $(call replace_libcxx,$(SHLIB_CXX11LD))
-  SHLIB_CXX14LD := $(call replace_libcxx,$(SHLIB_CXX14LD))
-  SHLIB_CXX17LD := $(call replace_libcxx,$(SHLIB_CXX17LD))
-  SHLIB_CXX20LD := $(call replace_libcxx,$(SHLIB_CXX20LD))
-
-  # Strip any remaining libc++ tokens from flags, then explicitly add libstdc++
-  CXXFLAGS      := $(call strip_libcxx,$(CXXFLAGS))      -stdlib=libstdc++
-  PKG_CXXFLAGS  := $(call strip_libcxx,$(PKG_CXXFLAGS))  -stdlib=libstdc++
-  PKG_LIBS      := $(call strip_libcxx,$(PKG_LIBS))      -stdlib=libstdc++
-endif
-
-# ----------------------------
-# Package flags / link flags
-# ----------------------------
-
 # It is unlikely that a user will have this library installed, but check anyway to follow CRAN policy
 # Note that we're using the version suffix pattern that OpenEXR actually creates
 ifeq (@LIB_EXISTS@, FALSE)
@@ -103,48 +27,11 @@ else
   PKG_LIBS = $(LIB_LINK) -lOpenEXRUtil-3_4 -lOpenEXR-3_4 -lOpenEXRCore-3_4 -lIlmThread-3_4 -lIex-3_4 -L$(IMATH_LIB) -lImath-3_2 -L$(DEFLATE_LIB) -ldeflate
 endif
 
-# Make unresolved symbols a link-time error (so you fail at build time, not dyn.load time)
-ifeq ($(UNAME_S),Linux)
-  PKG_LIBS += -Wl,--no-undefined -Wl,-z,defs
-endif
-ifeq ($(UNAME_S),Darwin)
-  PKG_LIBS += -Wl,-undefined,error
-endif
-
 # Required for linking with static libraries
 CFLAGS = $(CFLAGS) $(CPICFLAGS)
 CXXFLAGS = $(CXXFLAGS) $(CXXPICFLAGS)
 
-OPENEXR_CMAKE_FEATURE_ARGS := \
-  -D OPENEXR_BUILD_TOOLS=OFF \
-  -D OPENEXR_BUILD_EXAMPLES=OFF \
-  -D BUILD_TESTING=OFF \
-  -D OPENEXR_TEST_LIBRARIES=OFF \
-  -D OPENEXR_TEST_TOOLS=OFF \
-  -D OPENEXR_TEST_PYTHON=OFF \
-  -D BUILD_WEBSITE=OFF \
-  -D OPENEXR_BUILD_PYTHON=OFF
-
-OPENEXR_CMAKE_INSTALL_ARGS := \
-  -D CMAKE_INSTALL_PREFIX=$(INST_DIR) \
-  -D CMAKE_INSTALL_LIBDIR=lib/@TARGET_ARCH@
-
-OPENEXR_CMAKE_DEPS_ARGS := \
-  -D Imath_DIR=$(IMATH_CMAKE_DIR) \
-  -D libdeflate_DIR=$(DEFLATE_CMAKE_DIR) \
-  -D OPENEXR_FORCE_INTERNAL_IMATH=OFF \
-  -D OPENEXR_FORCE_INTERNAL_DEFLATE=OFF
-
-CLANG_FORMAT_FILE := $(OPENEXR_DIR)/src/OpenEXR/.clang-format
-
-# Use a separate build dir so we can delete it safely
-OPENEXR_BUILD_DIR := $(OPENEXR_DIR)/src/OpenEXR/build-cran
-
-# Cache file lives in the vendored source tree (do NOT delete it)
-OPENEXR_CACHE_FILE := $(OPENEXR_DIR)/src/OpenEXR/build/initial-cache.cmake
-# ----------------------------
-# Targets
-# ----------------------------
+# Main target
 all: $(OBJECTS)
 
 $(OBJECTS): $(STATIC_LIB)
@@ -187,40 +74,14 @@ $(STATIC_LIB):
 	  "src/OpenEXR/" \
 	  "^(#\\s*pragma warning.*)$$" \
 	  "__COMMENT_MATCHED_LINE__" && \
-  "$(R_HOME)/bin/Rscript" tools/search-replace.R \
-    "src/OpenEXR/CMakeLists.txt" \
-    "add_subdirectory\\(src/bin\\)" \
-    "# add_subdirectory(src/bin)  # disabled in CRAN vendor tree" && \
-  "$(R_HOME)/bin/Rscript" tools/search-replace.R \
-    "src/OpenEXR/CMakeLists.txt" \
-    "add_subdirectory\\(src/examples\\)" \
-    "# add_subdirectory(src/examples)  # disabled in CRAN vendor tree" && \
-  "$(R_HOME)/bin/Rscript" tools/search-replace.R \
-    "src/OpenEXR/CMakeLists.txt" \
-    "add_subdirectory\\(src/test\\)" \
-    "# add_subdirectory(src/test)  # disabled in CRAN vendor tree" && \
-  "$(R_HOME)/bin/Rscript" tools/search-replace.R \
-    "src/OpenEXR/CMakeLists.txt" \
-    "add_subdirectory\\(website/src\\)" \
-    "# add_subdirectory(website/src)  # disabled in CRAN vendor tree" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/" \
 	  "^(#\\s*pragma GCC diagnostic.*)$$" \
 	  "__COMMENT_MATCHED_LINE__" && \
 	"$(R_HOME)/bin/Rscript" tools/remove_stderr.R \
 	  "@PACKAGE_BASE_DIR@/src/OpenEXR/" && \
-	rm -rf $(OPENEXR_BUILD_DIR) && \
-	mkdir -p $(OPENEXR_BUILD_DIR) && \
-	test -f "$(CLANG_FORMAT_FILE)" || printf "BasedOnStyle: LLVM\nIndentWidth: 4\n" > "$(CLANG_FORMAT_FILE)" && \
-	rm -rf $(OPENEXR_BUILD_DIR) && \
-  mkdir -p $(OPENEXR_BUILD_DIR) && \
-  cd $(OPENEXR_BUILD_DIR) && \
-  $(CMAKE) -C $(OPENEXR_CACHE_FILE) \
-    $(OPENEXR_CMAKE_COMPILER_ARGS) \
-    $(OPENEXR_CMAKE_STDLIB_ARGS) \
-    $(OPENEXR_CMAKE_FEATURE_ARGS) \
-    $(OPENEXR_CMAKE_DEPS_ARGS) \
-    $(OPENEXR_CMAKE_INSTALL_ARGS) \
+	cd $(OPENEXR_DIR)/src/OpenEXR/build && \
+	$(CMAKE) -C ../build/initial-cache.cmake \
 	  -D CMAKE_CXX_STANDARD=20 \
 	  -D OPENEXR_CXX_STANDARD=20 \
 	  .. && \
@@ -228,6 +89,6 @@ $(STATIC_LIB):
 	$(CMAKE) --install . --config Release
 
 clean:
-	rm -rf $(OPENEXR_DIR)/src/OpenEXR/build-cran
-	rm -f @PACKAGE_BASE_DIR@/src/Makevars
-	rm -f @PACKAGE_BASE_DIR@/src/Makevars.win
+	rm -rf @PACKAGE_BASE_DIR@/src/OpenEXR/build &&
+	rm -rf @PACKAGE_BASE_DIR@/src/Makevars &&
+	rm -rf @PACKAGE_BASE_DIR@/src/Makevars.win
