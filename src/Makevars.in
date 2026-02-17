@@ -123,6 +123,11 @@ OPENEXR_CMAKE_DEPS_ARGS := \
 
 CLANG_FORMAT_FILE := $(OPENEXR_DIR)/src/OpenEXR/.clang-format
 
+# Use a separate build dir so we can delete it safely
+OPENEXR_BUILD_DIR := $(OPENEXR_DIR)/src/OpenEXR/build-cran
+
+# Cache file lives in the vendored source tree (do NOT delete it)
+OPENEXR_CACHE_FILE := $(OPENEXR_DIR)/src/OpenEXR/build/initial-cache.cmake
 # ----------------------------
 # Targets
 # ----------------------------
@@ -193,12 +198,14 @@ $(STATIC_LIB):
 	rm -rf $(OPENEXR_BUILD_DIR) && \
 	mkdir -p $(OPENEXR_BUILD_DIR) && \
 	test -f "$(CLANG_FORMAT_FILE)" || printf "BasedOnStyle: LLVM\nIndentWidth: 4\n" > "$(CLANG_FORMAT_FILE)" && \
-	cd $(OPENEXR_BUILD_DIR) && \
-	$(CMAKE) -C ../build/initial-cache.cmake \
-	  $(OPENEXR_CMAKE_COMPILER_ARGS) \
-	  $(OPENEXR_CMAKE_STDLIB_ARGS) \
-	  $(OPENEXR_CMAKE_FEATURE_ARGS) \
-	  $(OPENEXR_CMAKE_DEPS_ARGS) \
+	rm -rf $(OPENEXR_BUILD_DIR) && \
+  mkdir -p $(OPENEXR_BUILD_DIR) && \
+  cd $(OPENEXR_BUILD_DIR) && \
+  $(CMAKE) -C $(OPENEXR_CACHE_FILE) \
+    $(OPENEXR_CMAKE_COMPILER_ARGS) \
+    $(OPENEXR_CMAKE_STDLIB_ARGS) \
+    $(OPENEXR_CMAKE_FEATURE_ARGS) \
+    $(OPENEXR_CMAKE_DEPS_ARGS) \
 	  -D CMAKE_CXX_STANDARD=20 \
 	  -D OPENEXR_CXX_STANDARD=20 \
 	  .. && \
@@ -206,6 +213,6 @@ $(STATIC_LIB):
 	$(CMAKE) --install . --config Release
 
 clean:
-	rm -rf @PACKAGE_BASE_DIR@/src/OpenEXR/build
-	rm -rf @PACKAGE_BASE_DIR@/src/Makevars
-	rm -rf @PACKAGE_BASE_DIR@/src/Makevars.win
+	rm -rf $(OPENEXR_DIR)/src/OpenEXR/build-cran
+	rm -r @PACKAGE_BASE_DIR@/src/Makevars
+	rm -r @PACKAGE_BASE_DIR@/src/Makevars.win
