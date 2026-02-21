@@ -108,19 +108,12 @@ public:
 #ifdef __GNUC__
                 if (input % 100 == 0)
                 {
-                    fprintf (
-                        stderr,
-                        " Building acceleration for DwaCompressor, %.2f %%      %c",
-                        100. * (float) input / (float) numValues (),
-                        13);
+                    ;
                 }
 #else
                 if (input % 1000 == 0)
                 {
-                    fprintf (
-                        stderr,
-                        " Building acceleration for DwaCompressor, %.2f %%\n",
-                        100. * (float) input / (float) numValues ());
+                    ;
                 }
 #endif
             }
@@ -165,7 +158,7 @@ public:
 
                 if (valueFound == false)
                 {
-                    fprintf (stderr, "bork bork bork!\n");
+                    ;
                 }
 
                 candidate[candidateCount] = closestHalf;

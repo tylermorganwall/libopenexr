@@ -3,7 +3,6 @@
 
 # We require this to get object library link library support
 cmake_minimum_required(VERSION 3.14)
-message(STATUS "Configure ${OPENEXR_PACKAGE_NAME}, library API version: ${OPENEXR_LIB_VERSION}")
 
 if(POLICY CMP0074)
   # enable find_package(<Package>) to use <Package>_ROOT as a hint
@@ -47,10 +46,6 @@ set(OPENEXR_VERSION_API "${OpenEXR_VERSION_MAJOR}_${OpenEXR_VERSION_MINOR}")
 set(OPENEXR_LIB_SOVERSION 99)
 set(OPENEXR_LIB_VERSION "${OPENEXR_LIB_SOVERSION}.${OPENEXR_VERSION}") # e.g. "31.3.2.0"
 
-option(OPENEXR_INSTALL "Install OpenEXR libraries" ON)
-option(OPENEXR_INSTALL_TOOLS "Install OpenEXR tools" ON)
-option(OPENEXR_INSTALL_DEVELOPER_TOOLS "Install OpenEXR developer tools" OFF)
-
 if(OPENEXR_INSTALL OR OPENEXR_INSTALL_TOOLS OR OPENEXR_INSTALL_DEVELOPER_TOOLS)
   # uninstall target
   if(NOT TARGET uninstall)
@@ -92,10 +87,10 @@ if(OPENEXR_BUILD_TOOLS AND OPENEXR_BUILD_LIBS)
   add_subdirectory(src/bin)
 endif()
 
-# Tell CMake where to find the OpenEXRConfig.cmake file. Makes it possible to call 
+# Tell CMake where to find the OpenEXRConfig.cmake file. Makes it possible to call
 # find_package(OpenEXR) in downstream projects
 set(OpenEXR_DIR "${CMAKE_CURRENT_BINARY_DIR}/cmake" CACHE PATH "" FORCE)
-# Add an empty OpenEXRTargets.cmake file for the config to use. 
+# Add an empty OpenEXRTargets.cmake file for the config to use.
 # Can be empty since we already defined the targets in add_subdirectory
 file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/cmake/OpenEXRTargets.cmake" "# Dummy file")
 
@@ -107,7 +102,7 @@ endif()
 # upload the results, cmake has builtin support for
 # submitting to CDash, or any server who speaks the
 # same protocol
-# 
+#
 # These settings will need to be set for your environment,
 # and then a script such as the example in
 #
@@ -118,7 +113,7 @@ endif()
 # cmake -S cmake/SampleCTestScript.cmake
 #
 # [or whatever you name the file you edit]
-# 
+#
 #set(CTEST_PROJECT_NAME "OpenEXR")
 #set(CTEST_NIGHTLY_START_TIME "01:01:01 UTC")
 #set(CTEST_DROP_METHOD "http") # there are others...

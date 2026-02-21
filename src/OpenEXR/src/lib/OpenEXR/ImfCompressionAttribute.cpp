@@ -15,7 +15,7 @@
 
 #if defined(_MSC_VER)
 // suppress warning about non-exported base classes
-#    pragma warning(disable : 4275)
+
 #endif
 
 OPENEXR_IMF_INTERNAL_NAMESPACE_SOURCE_ENTER

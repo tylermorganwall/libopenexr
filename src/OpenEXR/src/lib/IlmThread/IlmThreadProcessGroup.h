@@ -100,8 +100,8 @@ public:
         Process* newhead;
         do
         {
-            if (!ret)
-                std::cerr << "GACK: serious failure case???" << std::endl;
+            if (!ret) {}
+                //////std::cerr << "GACK: serious failure case???" << std::endl;
 
             newhead = ret->next;
         } while ( !_avail_head.compare_exchange_weak(

@@ -19,8 +19,8 @@
 #include <cstring>
 
 #if defined(_MSC_VER)
-#    pragma warning(push, 0)
-#    pragma warning(disable : 4996)
+
+
 #endif
 
 OPENEXR_IMF_INTERNAL_NAMESPACE_HEADER_ENTER
@@ -143,7 +143,7 @@ operator< (const char text[], const Name& y)
 OPENEXR_IMF_INTERNAL_NAMESPACE_HEADER_EXIT
 
 #if defined(_MSC_VER)
-#    pragma warning(pop)
+
 #endif
 
 #endif

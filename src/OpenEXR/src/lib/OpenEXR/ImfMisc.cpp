@@ -26,14 +26,6 @@
 #include <codecvt>
 #include <locale>
 
-// START TMW NEW
-#include <string>
-#include <cstring>     // for std::strlen
-#if defined(_WIN32)
-  #include <windows.h>
-#endif
-// END TMW NEW
-
 OPENEXR_IMF_INTERNAL_NAMESPACE_SOURCE_ENTER
 
 using IMATH_NAMESPACE::Box2i;
@@ -2004,71 +1996,12 @@ getChunkOffsetTableSize (const Header& header)
         return getTiledChunkOffsetTableSize (header);
 }
 
-// std::wstring
-// WidenFilename (const char* filename)
-// {
-//     std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-//     return converter.from_bytes (filename);
-// }
-
-// START TMW NEW
-inline std::wstring
-WidenFilename(const char* filename)
+std::wstring
+WidenFilename (const char* filename)
 {
-    if (!filename)
-        return {};
-
-#if defined(_WIN32)
-    // Ask for size (includes the terminating null)
-    int size = ::MultiByteToWideChar(
-        CP_UTF8,
-        MB_ERR_INVALID_CHARS,
-        filename,
-        -1,       // treat 'filename' as null‑terminated
-        nullptr,
-        0
-    );
-    if (size == 0) {
-        // conversion failed
-        throw std::system_error(
-            GetLastError(),
-            std::system_category(),
-            "MultiByteToWideChar failed"
-        );
-    }
-
-    // Allocate and fill
-    std::wstring wstr(static_cast<size_t>(size), L'\0');
-    int got = ::MultiByteToWideChar(
-        CP_UTF8,
-        MB_ERR_INVALID_CHARS,
-        filename,
-        -1,
-        &wstr[0],
-        size
-    );
-    if (got == 0) {
-        throw std::system_error(
-            GetLastError(),
-            std::system_category(),
-            "MultiByteToWideChar failed"
-        );
-    }
-
-    return wstr;
-
-#else
-    // POSIX: filenames are byte‑sequences.  Widen each byte.
-    size_t len = std::strlen(filename);
-    std::wstring wstr;
-    wstr.reserve(len);
-    for (size_t i = 0; i < len; ++i) {
-        wstr.push_back(static_cast<unsigned char>(filename[i]));
-    }
-    return wstr;
-#endif
+    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+    return converter.from_bytes (filename);
 }
-// END TMW NEW
 
 const char*
 getLibraryVersion ()

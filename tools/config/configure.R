@@ -48,10 +48,61 @@ DEFLATE_LIB_ARCH = normalizePath(
 
 # Use pkg-config (if available) to find a system library
 package_name = "libopenexr"
-static_library_name = "libOpenEXR-3_4"
+openexr_version_header = file.path(
+  PACKAGE_BASE_DIR,
+  "src",
+  "OpenEXR",
+  "src",
+  "lib",
+  "OpenEXRCore",
+  "openexr_version.h"
+)
+openexr_version_lines = readLines(openexr_version_header, warn = FALSE)
+parse_openexr_version = function(field) {
+  as.integer(sub(
+    ".*\\s([0-9]+)\\s*$",
+    "\\1",
+    grep(
+      sprintf("OPENEXR_VERSION_%s", field),
+      openexr_version_lines,
+      value = TRUE
+    )[1]
+  ))
+}
+openexr_version_major = parse_openexr_version("MAJOR")
+openexr_version_minor = parse_openexr_version("MINOR")
+openexr_version_patch = parse_openexr_version("PATCH")
+openexr_api = sprintf("%s_%s", openexr_version_major, openexr_version_minor)
+openexr_has_openjph = openexr_version_major >= 4
+static_library_name = sprintf("libOpenEXR-%s", openexr_api)
 static_lib_filename = sprintf("%s.a", static_library_name)
+openjph_static_lib = if (openexr_has_openjph) {
+  normalizePath(
+    file.path(
+      PACKAGE_BASE_DIR,
+      "src",
+      "OpenEXR",
+      "build-cran",
+      "external",
+      "OpenJPH",
+      "src",
+      "core",
+      "libopenjph.a"
+    ),
+    winslash = "/",
+    mustWork = FALSE
+  )
+} else {
+  ""
+}
 
-package_version = "3.4.0"
+package_version = sprintf(
+  "%s.%s.%s",
+  openexr_version_major,
+  openexr_version_minor,
+  openexr_version_patch
+)
+openjph_link_flags = if (openexr_has_openjph) openjph_static_lib else ""
 lib_system = ""
 
 pkgconfig_path = Sys.which("pkg-config")
@@ -198,6 +249,9 @@ define(
   PACKAGE_BASE_DIR = PACKAGE_BASE_DIR,
   TARGET_ARCH = TARGET_ARCH,
   CMAKE = CMAKE,
+  OPENEXR_API = openexr_api,
+  OPENJPH_LINK_FLAGS = openjph_link_flags,
+  OPENJPH_STATIC_LIB = openjph_static_lib,
   LIB_EXISTS = as.character(lib_exists),
   IMATH_INCLUDE_DIR = IMATH_INCLUDE_DIR,
   IMATH_LIB_ARCH = IMATH_LIB_ARCH,
@@ -259,6 +313,12 @@ cmake_cfg = c(
   "-DCMAKE_BUILD_TYPE=Release",
   "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
 )
+
+if (openexr_has_openjph) {
+  # Keep OpenJPH in the vendored install prefix so final package linking
+  # does not depend on a system-level openjph path.
+  cmake_cfg = c(cmake_cfg, "-DOPENEXR_FORCE_INTERNAL_OPENJPH=ON")
+}
 
 
 cxx20 = Sys.getenv("CXX20", unset = "")

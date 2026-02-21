@@ -694,15 +694,24 @@ readDeepTile (T& in, bool reduceMemory, bool reduceTime)
                             try
                             {
 
+
                                 in.readPixelSampleCounts (
                                     x, y, x, y, xlevel, ylevel);
 
                                 size_t bufferSize     = 0;
                                 size_t fileBufferSize = 0;
 
-                                for (int ty = 0; ty < tileHeight; ++ty)
+                                Box2i tileRange =
+                                    in.dataWindowForTile (x, y, xlevel, ylevel);
+
+                                int thisTileWidth =
+                                    tileRange.max.x - tileRange.min.x + 1;
+                                int thisTileHeight =
+                                    tileRange.max.y - tileRange.min.y + 1;
+
+                                for (int ty = 0; ty < thisTileHeight; ++ty)
                                 {
-                                    for (int tx = 0; tx < tileWidth; ++tx)
+                                    for (int tx = 0; tx < thisTileWidth; ++tx)
                                     {
                                         fileBufferSize +=
                                             channelCount *
@@ -731,9 +740,10 @@ readDeepTile (T& in, bool reduceMemory, bool reduceTime)
                                     pixelBuffer.resize (bufferSize);
                                     size_t bufferIndex = 0;
 
-                                    for (int ty = 0; ty < tileHeight; ++ty)
+                                    for (int ty = 0; ty < thisTileHeight; ++ty)
                                     {
-                                        for (int tx = 0; tx < tileWidth; ++tx)
+                                        for (int tx = 0; tx < thisTileWidth;
+                                             ++tx)
                                         {
                                             if (!reduceMemory ||
                                                 localSampleCount[ty][tx] *
@@ -1683,12 +1693,7 @@ core_error_handler_cb (exr_const_context_t f, int code, const char* msg)
     {
         const char* fn;
         if (EXR_ERR_SUCCESS != exr_get_file_name (f, &fn)) fn = "<error>";
-        fprintf (
-            stderr,
-            "ERROR '%s' (%s): %s\n",
-            fn,
-            exr_get_error_code_as_string (code),
-            msg);
+        ;
     }
 }
 

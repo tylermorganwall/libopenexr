@@ -13,8 +13,8 @@
 
 #if defined(_MSC_VER)
 // suppress warning about non-exported base classes
-#    pragma warning(disable : 4251)
-#    pragma warning(disable : 4275)
+
+
 #endif
 
 #define IMF_STRING(name) #name
@@ -119,5 +119,6 @@ IMF_STD_ATTRIBUTE_IMP (multiView, MultiView, StringVector)
 IMF_STD_ATTRIBUTE_IMP (deepImageState, DeepImageState, DeepImageState)
 IMF_STD_ATTRIBUTE_IMP (dwaCompressionLevel, DwaCompressionLevel, float)
 IMF_STD_ATTRIBUTE_IMP (idManifest, IDManifest, CompressedIDManifest)
+IMF_STD_ATTRIBUTE_IMP (colorInteropID, ColorInteropID, string)
 
 OPENEXR_IMF_INTERNAL_NAMESPACE_SOURCE_EXIT

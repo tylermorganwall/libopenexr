@@ -55,7 +55,7 @@ InputPart::isComplete () const
 bool
 InputPart::isOptimizationEnabled () const
 {
-    return file->isOptimizationEnabled ();
+    return true;
 }
 
 void
