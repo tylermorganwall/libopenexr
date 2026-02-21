@@ -206,8 +206,10 @@ define(
   DEFLATE_LIB_ARCH = DEFLATE_LIB_ARCH
 )
 
+
 #Create build dir and
 build_dir = file.path(PACKAGE_BASE_DIR, "src/OpenEXR/build-cran")
+if (dir.exists(build_dir)) unlink(build_dir, recursive = TRUE, force = TRUE)
 dir.create(build_dir, recursive = TRUE, showWarnings = FALSE)
 
 cache_dir = file.path(PACKAGE_BASE_DIR, "src/OpenEXR/build")
@@ -260,11 +262,24 @@ cmake_cfg = c(
 
 cxx20 = Sys.getenv("CXX20", unset = "")
 cxx = Sys.getenv("CXX", unset = "")
+toolchain = paste(cxx20, cxx)
+
+use_libcxx = grepl("-stdlib=libc\\+\\+", toolchain)
+is_clang = grepl("clang\\+\\+", toolchain) || grepl("\\bclang\\b", toolchain)
+
+
+cxx20 = Sys.getenv("CXX20", unset = "")
+cxx = Sys.getenv("CXX", unset = "")
 
 use_libcxx = grepl("-stdlib=libc\\+\\+", paste(cxx20, cxx))
 
 if (use_libcxx) {
   cmake_cfg = c(cmake_cfg, "-DCMAKE_CXX_COMPILER_ARG1=-stdlib=libc++")
+} else if (
+  is_clang && .Platform$OS.type == "unix" && Sys.info()[["sysname"]] != "Darwin"
+) {
+  # Linux clang without explicit libc++: force libstdc++
+  cmake_cfg = c(cmake_cfg, "-DCMAKE_CXX_COMPILER_ARG1=-stdlib=libstdc++")
 }
 
 oldwd = getwd()
