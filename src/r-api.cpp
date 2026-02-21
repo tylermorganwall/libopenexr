@@ -172,6 +172,8 @@ extern "C" SEXP C_write_exr(SEXP path_SEXP, SEXP rMat, SEXP gMat, SEXP bMat,
     header.channels().insert("G", Channel(FLOAT));
     header.channels().insert("B", Channel(FLOAT));
     header.channels().insert("A", Channel(FLOAT));
+    // Keep compression enabled, but avoid 16-line ZIP chunking.
+    header.compression() = ZIPS_COMPRESSION;
     write_debug_log("header ready + channels inserted");
 
     FrameBuffer fb;
