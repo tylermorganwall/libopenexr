@@ -15,6 +15,7 @@
 #include <ImfInputFile.h>
 #include <ImfOutputFile.h>
 #include <vector>
+#include <cmath>
 
 using namespace OPENEXR_IMF_NAMESPACE;
 using namespace IMATH_NAMESPACE;
@@ -32,7 +33,8 @@ inline void check_bool(bool ok, const char *msg) {
 extern "C" SEXP C_read_exr(SEXP path_SEXP) {
   const char *path = CHAR(STRING_ELT(path_SEXP, 0));
   try {
-    InputFile file(path);
+    // Use a single worker thread for deterministic behavior across toolchains.
+    InputFile file(path, 1);
     const Header &hdr = file.header();
     Box2i dw = hdr.dataWindow();
     const int w = dw.max.x - dw.min.x + 1;
@@ -106,9 +108,19 @@ extern "C" SEXP C_write_exr(SEXP path_SEXP, SEXP rMat, SEXP gMat, SEXP bMat,
 
   check_bool(Rf_isMatrix(rMat) && Rf_isMatrix(gMat) && Rf_isMatrix(bMat) && Rf_isMatrix(aMat),
              "All channels must be matrices");
-  check_bool(Rf_nrows(rMat) == h && Rf_ncols(rMat) == w, "Dimension mismatch");
+  check_bool(
+      Rf_nrows(rMat) == h && Rf_ncols(rMat) == w &&
+      Rf_nrows(gMat) == h && Rf_ncols(gMat) == w &&
+      Rf_nrows(bMat) == h && Rf_ncols(bMat) == w &&
+      Rf_nrows(aMat) == h && Rf_ncols(aMat) == w,
+      "Dimension mismatch");
 
-  const double *rD = REAL(rMat), *gD = REAL(gMat), *bD = REAL(bMat), *aD = REAL(aMat);
+  SEXP rNum = PROTECT(Rf_coerceVector(rMat, REALSXP));
+  SEXP gNum = PROTECT(Rf_coerceVector(gMat, REALSXP));
+  SEXP bNum = PROTECT(Rf_coerceVector(bMat, REALSXP));
+  SEXP aNum = PROTECT(Rf_coerceVector(aMat, REALSXP));
+
+  const double *rD = REAL(rNum), *gD = REAL(gNum), *bD = REAL(bNum), *aD = REAL(aNum);
 
   // Pack into row-major float buffers (EXR expects x to stride fastest)
   std::vector<float> r32(w * h), g32(w * h), b32(w * h), a32(w * h);
@@ -142,13 +154,16 @@ extern "C" SEXP C_write_exr(SEXP path_SEXP, SEXP rMat, SEXP gMat, SEXP bMat,
     fb.insert("B", Slice(FLOAT, (char*)b32.data(), xs, ys));
     fb.insert("A", Slice(FLOAT, (char*)a32.data(), xs, ys));
 
-    OutputFile file(path, header);
+    // Use a single worker thread for deterministic behavior across toolchains.
+    OutputFile file(path, header, 1);
     file.setFrameBuffer(fb);
     file.writePixels(h);
   } catch (const std::exception &e) {
+    UNPROTECT(4);
     Rf_error("OpenEXR write error: %s", e.what());
   }
 
+  UNPROTECT(4);
   return R_NilValue;
 }
 
