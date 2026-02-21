@@ -124,10 +124,12 @@ Description: Provides the 'OpenEXR' static library and 'C++' headers
     with a basic R interface to load 'EXR' images.
 Depends: R (>= 4.3.0)
 License: BSD_3_clause + file LICENSE
-LinkingTo: libimath, libdeflate
+LinkingTo: libimath (>= 3.2.2), 
+    libdeflate
 Encoding: UTF-8
 LazyData: true
 SystemRequirements: CMake, GNU make
 RoxygenNote: 7.3.2
 Biarch: TRUE
 BugReports: https://github.com/tylermorganwall/libopenexr/issues
+Remotes: tylermorganwall/libdeflate, tylermorganwall/libimath
