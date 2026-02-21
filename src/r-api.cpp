@@ -14,6 +14,10 @@
 #include <ImfHeader.h>
 #include <ImfInputFile.h>
 #include <ImfOutputFile.h>
+#include <cstdarg>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <vector>
 #include <cmath>
 
@@ -25,6 +29,28 @@ using namespace IMATH_NAMESPACE;
 inline void check_bool(bool ok, const char *msg) {
   if (!ok)
     Rf_error("%s", msg);
+}
+
+inline bool write_debug_enabled() {
+  static int enabled = -1;
+  if (enabled == -1) {
+    const char* env = std::getenv("LIBOPENEXR_DEBUG_WRITE");
+    enabled = (env != nullptr && env[0] != '\0' && std::strcmp(env, "0") != 0) ? 1 : 0;
+  }
+  return enabled == 1;
+}
+
+inline void write_debug_log(const char* fmt, ...) {
+  if (!write_debug_enabled()) {
+    return;
+  }
+  std::fprintf(stderr, "[libopenexr::C_write_exr] ");
+  va_list args;
+  va_start(args, fmt);
+  std::vfprintf(stderr, fmt, args);
+  va_end(args);
+  std::fprintf(stderr, "\n");
+  std::fflush(stderr);
 }
 
 // ---------------------------------------------------------------------
@@ -105,6 +131,11 @@ extern "C" SEXP C_write_exr(SEXP path_SEXP, SEXP rMat, SEXP gMat, SEXP bMat,
   const char *path = CHAR(STRING_ELT(path_SEXP, 0));
   const int w = INTEGER(w_SEXP)[0];
   const int h = INTEGER(h_SEXP)[0];
+  write_debug_log("enter path='%s' w=%d h=%d", path, w, h);
+  write_debug_log(
+      "input dims r=%dx%d g=%dx%d b=%dx%d a=%dx%d",
+      Rf_nrows(rMat), Rf_ncols(rMat), Rf_nrows(gMat), Rf_ncols(gMat),
+      Rf_nrows(bMat), Rf_ncols(bMat), Rf_nrows(aMat), Rf_ncols(aMat));
 
   check_bool(Rf_isMatrix(rMat) && Rf_isMatrix(gMat) && Rf_isMatrix(bMat) && Rf_isMatrix(aMat),
              "All channels must be matrices");
@@ -114,16 +145,20 @@ extern "C" SEXP C_write_exr(SEXP path_SEXP, SEXP rMat, SEXP gMat, SEXP bMat,
       Rf_nrows(bMat) == h && Rf_ncols(bMat) == w &&
       Rf_nrows(aMat) == h && Rf_ncols(aMat) == w,
       "Dimension mismatch");
+  write_debug_log("type/dimension checks passed");
 
   SEXP rNum = PROTECT(Rf_coerceVector(rMat, REALSXP));
   SEXP gNum = PROTECT(Rf_coerceVector(gMat, REALSXP));
   SEXP bNum = PROTECT(Rf_coerceVector(bMat, REALSXP));
   SEXP aNum = PROTECT(Rf_coerceVector(aMat, REALSXP));
+  write_debug_log("coerce to REALSXP done");
 
   const double *rD = REAL(rNum), *gD = REAL(gNum), *bD = REAL(bNum), *aD = REAL(aNum);
+  write_debug_log("REAL pointers acquired");
 
   // Pack into row-major float buffers (EXR expects x to stride fastest)
   std::vector<float> r32(w * h), g32(w * h), b32(w * h), a32(w * h);
+  write_debug_log("float buffers allocated size=%d", w * h);
   for (int y = 0; y < h; ++y) {
     for (int x = 0; x < w; ++x) {
       const ptrdiff_t pos_colmajor = x * (ptrdiff_t)h + y;   // R column-major
@@ -137,32 +172,48 @@ extern "C" SEXP C_write_exr(SEXP path_SEXP, SEXP rMat, SEXP gMat, SEXP bMat,
       a32[pos_rowmajor] = ffin(aD[pos_colmajor]);
     }
   }
+  write_debug_log(
+      "channel conversion finished sample r=%g g=%g b=%g a=%g",
+      (w > 0 && h > 0) ? r32[0] : 0.0f,
+      (w > 0 && h > 0) ? g32[0] : 0.0f,
+      (w > 0 && h > 0) ? b32[0] : 0.0f,
+      (w > 0 && h > 0) ? a32[0] : 0.0f);
 
   try {
+    write_debug_log("building OpenEXR header");
     Header header(w, h); // dataWindow [0..w-1],[0..h-1]
     header.channels().insert("R", Channel(FLOAT));
     header.channels().insert("G", Channel(FLOAT));
     header.channels().insert("B", Channel(FLOAT));
     header.channels().insert("A", Channel(FLOAT));
     header.compression() = ZIP_COMPRESSION; // or ZIPS/PIZ/DWAA…
+    write_debug_log("header ready + channels inserted");
 
     FrameBuffer fb;
     const size_t xs = sizeof(float), ys = sizeof(float) * (size_t)w;
+    write_debug_log("framebuffer setup xs=%zu ys=%zu", xs, ys);
 
     fb.insert("R", Slice(FLOAT, (char*)r32.data(), xs, ys));
     fb.insert("G", Slice(FLOAT, (char*)g32.data(), xs, ys));
     fb.insert("B", Slice(FLOAT, (char*)b32.data(), xs, ys));
     fb.insert("A", Slice(FLOAT, (char*)a32.data(), xs, ys));
+    write_debug_log("framebuffer channel slices inserted");
 
     // Use a single worker thread for deterministic behavior across toolchains.
+    write_debug_log("constructing OutputFile");
     OutputFile file(path, header, 1);
+    write_debug_log("OutputFile constructed");
     file.setFrameBuffer(fb);
+    write_debug_log("setFrameBuffer complete; calling writePixels(%d)", h);
     file.writePixels(h);
+    write_debug_log("writePixels complete");
   } catch (const std::exception &e) {
+    write_debug_log("exception: %s", e.what());
     UNPROTECT(4);
     Rf_error("OpenEXR write error: %s", e.what());
   }
 
+  write_debug_log("success return");
   UNPROTECT(4);
   return R_NilValue;
 }
