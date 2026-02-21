@@ -68,8 +68,8 @@ $(STATIC_LIB) $(OPENJPH_STATIC_LIB):
 	  "\\1//std::cerr" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/IlmThread/IlmThreadProcessGroup.h" \
-	  "if \(!ret\)( \{\})?" \
-	  "if \(!ret\) \{\}" && \
+	  "^(\\s*)if \\(!ret\\)( \\{\\})?\\s*$$" \
+	  "\\1if (!ret) throw IEX_NAMESPACE::LogicExc (\"ProcessGroup pop failed\");" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/OpenEXRCore/internal_structs.c" \
 	  "fflush \(stderr\);" \
