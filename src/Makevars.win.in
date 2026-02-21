@@ -75,6 +75,18 @@ $(STATIC_LIB) $(OPENJPH_STATIC_LIB):
 	  "fflush \(stderr\);" \
 	  ";" && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
+	  "src/OpenEXR/external/OpenJPH/src/core/others/ojph_message.cpp" \
+	  "FILE\\s*\\*\\s*info_stream\\s*=\\s*stdout\\s*;" \
+	  "  FILE* info_stream = NULL;" && \
+	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
+	  "src/OpenEXR/external/OpenJPH/src/core/others/ojph_message.cpp" \
+	  "FILE\\s*\\*\\s*warning_stream\\s*=\\s*stdout\\s*;" \
+	  "  FILE *warning_stream = NULL;" && \
+	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
+	  "src/OpenEXR/external/OpenJPH/src/core/others/ojph_message.cpp" \
+	  "FILE\\s*\\*\\s*error_stream\\s*=\\s*stderr\\s*;" \
+	  "  FILE *error_stream = NULL;" && \
+	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/" \
 	  "^(#\\s*pragma warning.*)$$" \
 	  "__COMMENT_MATCHED_LINE__" && \
@@ -106,6 +118,9 @@ $(STATIC_LIB) $(OPENJPH_STATIC_LIB):
 	src/OpenEXR/build-cran/cmake/IlmThreadConfig.h \
 	src/OpenEXR/build-cran/cmake/OpenEXRConfig.h \
 	src/OpenEXR/build-cran/cmake/OpenEXRConfigInternal.h \
+	src/OpenEXR/build-cran/arch.c \
+	src/OpenEXR/build-cran/external/OpenJPH/src/core/Makefile \
+	src/OpenEXR/build-cran/external/OpenJPH/Makefile \
 	src/OpenEXR/src/lib/IlmThread/IlmThreadProcessGroup.h \
 	src/OpenEXR/src/lib/OpenEXR/ImfInputPart.cpp \
 	src/OpenEXR/src/lib/OpenEXRCore/chunk.c \

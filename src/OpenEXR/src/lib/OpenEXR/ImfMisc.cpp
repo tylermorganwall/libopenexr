@@ -23,8 +23,15 @@
 #include <ImfTileDescription.h>
 #include <ImfXdr.h>
 
-#include <codecvt>
-#include <locale>
+#include <cwchar>
+#include <cstring>
+
+#if defined(_WIN32)
+#    ifndef NOMINMAX
+#        define NOMINMAX
+#    endif
+#    include <windows.h>
+#endif
 
 OPENEXR_IMF_INTERNAL_NAMESPACE_SOURCE_ENTER
 
@@ -1999,8 +2006,40 @@ getChunkOffsetTableSize (const Header& header)
 std::wstring
 WidenFilename (const char* filename)
 {
-    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-    return converter.from_bytes (filename);
+    if (!filename) { return std::wstring (); }
+
+#if defined(_WIN32)
+    int fnlen = static_cast<int> (std::strlen (filename));
+    int wsize = MultiByteToWideChar (CP_UTF8, 0, filename, fnlen, NULL, 0);
+    if (wsize <= 0) { return std::wstring (); }
+
+    std::wstring out (static_cast<size_t> (wsize), L'\0');
+    MultiByteToWideChar (CP_UTF8, 0, filename, fnlen, &out[0], wsize);
+    return out;
+#else
+    std::mbstate_t state = std::mbstate_t ();
+    const char*    src   = filename;
+    size_t         wsize = std::mbsrtowcs (NULL, &src, 0, &state);
+
+    if (wsize == static_cast<size_t> (-1))
+    {
+        std::wstring out;
+        out.reserve (std::strlen (filename));
+        for (const unsigned char* p =
+                 reinterpret_cast<const unsigned char*> (filename);
+             *p; ++p)
+            out.push_back (static_cast<wchar_t> (*p));
+        return out;
+    }
+
+    if (wsize == 0) { return std::wstring (); }
+
+    std::wstring out (wsize, L'\0');
+    state = std::mbstate_t ();
+    src   = filename;
+    std::mbsrtowcs (&out[0], &src, wsize, &state);
+    return out;
+#endif
 }
 
 const char*
