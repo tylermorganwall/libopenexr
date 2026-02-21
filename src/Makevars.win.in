@@ -32,12 +32,12 @@ CFLAGS = $(CFLAGS) $(CPICFLAGS)
 CXXFLAGS = $(CXXFLAGS) $(CXXPICFLAGS)
 
 # Main target
-all: $(OBJECTS) 
+all: $(OBJECTS)
 
 
 $(OBJECTS): $(STATIC_LIB)
 
-$(STATIC_LIB): 
+$(STATIC_LIB):
 	cd $(OPENEXR_DIR) && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/OpenEXR/ImfInputPart.cpp" \
@@ -82,10 +82,7 @@ $(STATIC_LIB):
 	"$(R_HOME)/bin/Rscript" tools/remove_stderr.R \
 	  "src/OpenEXR/" && \
 	cd $(OPENEXR_DIR)/src/OpenEXR/build && \
-	$(CMAKE) -C ../build/initial-cache.cmake \
-	  -D CMAKE_CXX_STANDARD=20 \
-	  -D OPENEXR_CXX_STANDARD=20 \
-	  .. && \
+	cd $(OPENEXR_DIR)/src/OpenEXR/build-cran && \
 	$(CMAKE) --build . --config Release && \
 	$(CMAKE) --install . --config Release && \
 	cd @PACKAGE_BASE_DIR@ && \
@@ -116,7 +113,5 @@ $(STATIC_LIB):
 	inst/include/OpenEXR/IlmThreadProcessGroup.h \
 	inst/include/OpenEXR/OpenEXRConfig.h
 
-clean: 
-	rm -rf @PACKAGE_BASE_DIR@/src/OpenEXR/build && 
-	rm -rf @PACKAGE_BASE_DIR@/src/Makevars &&
-	rm -rf @PACKAGE_BASE_DIR@/src/Makevars.win
+clean:
+	rm -rf @PACKAGE_BASE_DIR@/src/OpenEXR/build-cran
