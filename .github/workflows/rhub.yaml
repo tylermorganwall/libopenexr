@@ -23,9 +23,6 @@ on:
         description: 'Unique ID. You can leave this empty now.'
         type: string
 
-env:
-  LIBOPENEXR_DEBUG_WRITE: 1
-
 jobs:
 
   setup:

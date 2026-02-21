@@ -16,8 +16,6 @@
 #include <ImfOutputFile.h>
 #include <cstdarg>
 #include <cstdio>
-#include <cstdlib>
-#include <cstring>
 #include <vector>
 #include <cmath>
 
@@ -31,19 +29,7 @@ inline void check_bool(bool ok, const char *msg) {
     Rf_error("%s", msg);
 }
 
-inline bool write_debug_enabled() {
-  static int enabled = -1;
-  if (enabled == -1) {
-    const char* env = std::getenv("LIBOPENEXR_DEBUG_WRITE");
-    enabled = (env != nullptr && env[0] != '\0' && std::strcmp(env, "0") != 0) ? 1 : 0;
-  }
-  return enabled == 1;
-}
-
 inline void write_debug_log(const char* fmt, ...) {
-  if (!write_debug_enabled()) {
-    return;
-  }
   std::fprintf(stderr, "[libopenexr::C_write_exr] ");
   va_list args;
   va_start(args, fmt);
