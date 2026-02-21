@@ -172,7 +172,9 @@ extern "C" SEXP C_write_exr(SEXP path_SEXP, SEXP rMat, SEXP gMat, SEXP bMat,
     header.channels().insert("G", Channel(FLOAT));
     header.channels().insert("B", Channel(FLOAT));
     header.channels().insert("A", Channel(FLOAT));
-    header.compression() = ZIP_COMPRESSION; // or ZIPS/PIZ/DWAA…
+    // Diagnostic: avoid ZIP block compression path while investigating
+    // deterministic Linux segfaults around scanline-block boundaries.
+    header.compression() = NO_COMPRESSION;
     write_debug_log("header ready + channels inserted");
 
     FrameBuffer fb;
