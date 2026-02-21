@@ -260,16 +260,14 @@ cmake_cfg = c(
   "-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
 )
 
+
 cxx20 = Sys.getenv("CXX20", unset = "")
 cxx = Sys.getenv("CXX", unset = "")
+
 toolchain = paste(cxx20, cxx)
 
 use_libcxx = grepl("-stdlib=libc\\+\\+", toolchain)
 is_clang = grepl("clang\\+\\+", toolchain) || grepl("\\bclang\\b", toolchain)
-
-
-cxx20 = Sys.getenv("CXX20", unset = "")
-cxx = Sys.getenv("CXX", unset = "")
 
 use_libcxx = grepl("-stdlib=libc\\+\\+", paste(cxx20, cxx))
 
