@@ -88,21 +88,21 @@ $(STATIC_LIB):
 	cd @PACKAGE_BASE_DIR@ && \
 	"$(R_HOME)/bin/Rscript" tools/fix-line-endings.R \
 	src/Makevars \
-	src/OpenEXR/build/Makefile \
-	src/OpenEXR/build/cmake/Makefile \
-	src/OpenEXR/build/src/lib/Iex/Makefile \
-	src/OpenEXR/build/src/lib/IlmThread/Makefile \
-	src/OpenEXR/build/src/lib/Makefile \
-	src/OpenEXR/build/src/lib/OpenEXR/Makefile \
-	src/OpenEXR/build/src/lib/OpenEXRCore/Makefile \
-	src/OpenEXR/build/src/lib/OpenEXRUtil/Makefile \
-	src/OpenEXR/build/CMakeFiles/*/CompilerIdC/CMakeCCompilerId.c \
-	src/OpenEXR/build/CMakeFiles/*/CompilerIdCXX/CMakeCXXCompilerId.cpp \
-	src/OpenEXR/build/cmake/IexConfig.h \
-	src/OpenEXR/build/cmake/IexConfigInternal.h \
-	src/OpenEXR/build/cmake/IlmThreadConfig.h \
-	src/OpenEXR/build/cmake/OpenEXRConfig.h \
-	src/OpenEXR/build/cmake/OpenEXRConfigInternal.h \
+	src/OpenEXR/build-cran/Makefile \
+	src/OpenEXR/build-cran/cmake/Makefile \
+	src/OpenEXR/build-cran/src/lib/Iex/Makefile \
+	src/OpenEXR/build-cran/src/lib/IlmThread/Makefile \
+	src/OpenEXR/build-cran/src/lib/Makefile \
+	src/OpenEXR/build-cran/src/lib/OpenEXR/Makefile \
+	src/OpenEXR/build-cran/src/lib/OpenEXRCore/Makefile \
+	src/OpenEXR/build-cran/src/lib/OpenEXRUtil/Makefile \
+	src/OpenEXR/build-cran/CMakeFiles/*/CompilerIdC/CMakeCCompilerId.c \
+	src/OpenEXR/build-cran/CMakeFiles/*/CompilerIdCXX/CMakeCXXCompilerId.cpp \
+	src/OpenEXR/build-cran/cmake/IexConfig.h \
+	src/OpenEXR/build-cran/cmake/IexConfigInternal.h \
+	src/OpenEXR/build-cran/cmake/IlmThreadConfig.h \
+	src/OpenEXR/build-cran/cmake/OpenEXRConfig.h \
+	src/OpenEXR/build-cran/cmake/OpenEXRConfigInternal.h \
 	src/OpenEXR/src/lib/IlmThread/IlmThreadProcessGroup.h \
 	src/OpenEXR/src/lib/OpenEXR/ImfInputPart.cpp \
 	src/OpenEXR/src/lib/OpenEXRCore/chunk.c \
