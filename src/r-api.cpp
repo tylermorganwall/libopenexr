@@ -192,10 +192,9 @@ extern "C" SEXP C_write_exr(SEXP path_SEXP, SEXP rMat, SEXP gMat, SEXP bMat,
     file.setFrameBuffer(fb);
     write_debug_log("setFrameBuffer complete; writing scanlines one-by-one");
     for (int i = 0; i < h; ++i) {
+      write_debug_log("writePixels start %d/%d", i + 1, h);
       file.writePixels(1);
-      if (i == 0 || ((i + 1) % 100) == 0 || (i + 1) == h) {
-        write_debug_log("writePixels progress %d/%d", i + 1, h);
-      }
+      write_debug_log("writePixels done %d/%d", i + 1, h);
     }
     write_debug_log("writePixels complete");
   } catch (const std::exception &e) {
