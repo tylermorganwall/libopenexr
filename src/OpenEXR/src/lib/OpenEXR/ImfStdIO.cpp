@@ -17,9 +17,15 @@
 #include <errno.h>
 #include <filesystem>
 
-#if __cplusplus >= 202002L && defined(__cpp_lib_ranges) && \
-    (__cpp_lib_ranges >= 201911L) && defined(__cpp_lib_span) && \
-    (__cpp_lib_span >= 202002L)
+#if defined(_GLIBCXX_RELEASE) && (_GLIBCXX_RELEASE < 13)
+#    define IMFSTDIO_HAVE_STABLE_RANGES_VIEWS 0
+#else
+#    define IMFSTDIO_HAVE_STABLE_RANGES_VIEWS 1
+#endif
+
+#if __cplusplus >= 202002L && IMFSTDIO_HAVE_STABLE_RANGES_VIEWS && \
+    defined(__cpp_lib_ranges) && (__cpp_lib_ranges >= 201911L) && \
+    defined(__cpp_lib_span) && (__cpp_lib_span >= 202002L)
 #    define IMFSTDIO_HAVE_RANGES_PATH_VIEW 1
 #    include <ranges>
 #    include <span>
