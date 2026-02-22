@@ -10,10 +10,34 @@
 #include "internal_structs.h"
 
 #include <limits.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "openexr_compression.h"
+
+static void
+zip_tracef (const char* fmt, ...)
+{
+    char    buf[512];
+    va_list ap;
+    int     n;
+
+    va_start (ap, fmt);
+    n = vsnprintf (buf, sizeof (buf), fmt, ap);
+    va_end (ap);
+
+    if (n > 0)
+    {
+        size_t wn = (size_t) n;
+        if (wn > sizeof (buf) - 1) wn = sizeof (buf) - 1;
+        (void) write (2, "[openexr::zip] ", 15);
+        (void) write (2, buf, wn);
+        (void) write (2, "\n", 1);
+    }
+}
 
 #if defined __SSE2__ || (_MSC_VER >= 1300 && (_M_IX86 || _M_X64))
 #    define IMF_HAVE_SSE2 1
@@ -359,9 +383,24 @@ apply_zip_impl (exr_encode_pipeline_t* encode)
     rv = exr_get_zip_compression_level (
         encode->context, encode->part_index, &level);
     if (rv != EXR_ERR_SUCCESS) return rv;
+    zip_tracef (
+        "apply_zip_impl start part=%d y=%d h=%d packed=%" PRIu64 " comp_alloc=%" PRIu64 " scratch_alloc=%" PRIu64 " level=%d",
+        encode->part_index,
+        encode->chunk.start_y,
+        encode->chunk.height,
+        (uint64_t) encode->packed_bytes,
+        (uint64_t) encode->compressed_alloc_size,
+        (uint64_t) encode->scratch_alloc_size_1,
+        level);
 
     internal_zip_deconstruct_bytes (
         encode->scratch_buffer_1, encode->packed_buffer, encode->packed_bytes);
+    zip_tracef (
+        "after deconstruct y=%d packed=%" PRIu64 " in=%p out=%p",
+        encode->chunk.start_y,
+        (uint64_t) encode->packed_bytes,
+        encode->scratch_buffer_1,
+        encode->compressed_buffer);
 
     rv = exr_compress_buffer (
         encode->context,
@@ -371,6 +410,11 @@ apply_zip_impl (exr_encode_pipeline_t* encode)
         encode->compressed_buffer,
         encode->compressed_alloc_size,
         &compbufsz);
+    zip_tracef (
+        "after exr_compress_buffer y=%d rv=%d compbuf=%" PRIu64,
+        encode->chunk.start_y,
+        (int) rv,
+        (uint64_t) compbufsz);
 
     if (rv == EXR_ERR_SUCCESS)
     {
@@ -383,6 +427,10 @@ apply_zip_impl (exr_encode_pipeline_t* encode)
             compbufsz = encode->packed_bytes;
         }
         encode->compressed_bytes = compbufsz;
+        zip_tracef (
+            "apply_zip_impl success y=%d compressed=%" PRIu64,
+            encode->chunk.start_y,
+            (uint64_t) encode->compressed_bytes);
     }
     else
     {

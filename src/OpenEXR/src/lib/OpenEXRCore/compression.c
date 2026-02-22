@@ -32,6 +32,30 @@
 #    include <libdeflate.h>
 #endif
 #include <string.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <unistd.h>
+
+static void
+deflate_tracef (const char* fmt, ...)
+{
+    char    buf[512];
+    va_list ap;
+    int     n;
+
+    va_start (ap, fmt);
+    n = vsnprintf (buf, sizeof (buf), fmt, ap);
+    va_end (ap);
+
+    if (n > 0)
+    {
+        size_t wn = (size_t) n;
+        if (wn > sizeof (buf) - 1) wn = sizeof (buf) - 1;
+        (void) write (2, "[openexr::deflate] ", 19);
+        (void) write (2, buf, wn);
+        (void) write (2, "\n", 1);
+    }
+}
 
 #if (                                                                          \
     LIBDEFLATE_VERSION_MAJOR > 1 ||                                            \
@@ -96,6 +120,13 @@ exr_compress_buffer (
     size_t*             actual_out)
 {
     struct libdeflate_compressor* comp;
+    deflate_tracef (
+        "compress enter in=%p in_bytes=%" PRIu64 " out=%p out_avail=%" PRIu64 " level=%d",
+        in,
+        (uint64_t) in_bytes,
+        out,
+        (uint64_t) out_bytes_avail,
+        level);
 
 #ifdef EXR_USE_CONFIG_DEFLATE_STRUCT
     struct libdeflate_options opt = {
@@ -121,13 +152,23 @@ exr_compress_buffer (
 #else
     comp = libdeflate_alloc_compressor (level);
 #endif
+    deflate_tracef ("compressor alloc result=%p level=%d", (void*) comp, level);
     if (comp)
     {
         size_t outsz;
+        deflate_tracef (
+            "calling zlib_compress comp=%p in=%p in_bytes=%" PRIu64 " out=%p out_avail=%" PRIu64,
+            (void*) comp,
+            in,
+            (uint64_t) in_bytes,
+            out,
+            (uint64_t) out_bytes_avail);
         outsz =
             libdeflate_zlib_compress (comp, in, in_bytes, out, out_bytes_avail);
+        deflate_tracef ("zlib_compress returned outsz=%" PRIu64, (uint64_t) outsz);
 
         libdeflate_free_compressor (comp);
+        deflate_tracef ("compressor freed comp=%p", (void*) comp);
 
         if (outsz != 0)
         {

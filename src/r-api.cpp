@@ -15,6 +15,7 @@
 #include <ImfInputFile.h>
 #include <ImfOutputFile.h>
 #include <cstdarg>
+#include <cstdlib>
 #include <cstdio>
 #include <vector>
 #include <cmath>
@@ -172,8 +173,14 @@ extern "C" SEXP C_write_exr(SEXP path_SEXP, SEXP rMat, SEXP gMat, SEXP bMat,
     header.channels().insert("G", Channel(FLOAT));
     header.channels().insert("B", Channel(FLOAT));
     header.channels().insert("A", Channel(FLOAT));
-    // Keep compression enabled, but avoid 16-line ZIP chunking.
-    header.compression() = ZIPS_COMPRESSION;
+    const char* force_zip = std::getenv("LIBOPENEXR_FORCE_ZIP");
+    if (force_zip && force_zip[0] != '\0' && force_zip[0] != '0') {
+      header.compression() = ZIP_COMPRESSION;
+      write_debug_log("compression mode=ZIP_COMPRESSION (forced)");
+    } else {
+      header.compression() = ZIPS_COMPRESSION;
+      write_debug_log("compression mode=ZIPS_COMPRESSION (default)");
+    }
     write_debug_log("header ready + channels inserted");
 
     FrameBuffer fb;
