@@ -317,15 +317,10 @@ cmake_cfg = c(
 	"-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
 )
 
-force_internal_deflate = identical(
-	trimws(Sys.getenv("LIBOPENEXR_FORCE_INTERNAL_DEFLATE", unset = "")),
-	"1"
+message(
+	"Forcing vendored OpenEXR libdeflate (OPENEXR_FORCE_INTERNAL_DEFLATE=ON)"
 )
-
-if (force_internal_deflate) {
-	message("Forcing vendored OpenEXR libdeflate (OPENEXR_FORCE_INTERNAL_DEFLATE=ON)")
-	cmake_cfg = c(cmake_cfg, "-DOPENEXR_FORCE_INTERNAL_DEFLATE=ON")
-}
+cmake_cfg = c(cmake_cfg, "-DOPENEXR_FORCE_INTERNAL_DEFLATE=ON")
 
 if (openexr_has_openjph) {
 	# Keep OpenJPH in the vendored install prefix so final package linking
