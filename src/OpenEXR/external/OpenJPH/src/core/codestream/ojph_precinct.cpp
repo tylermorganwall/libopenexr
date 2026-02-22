@@ -53,15 +53,18 @@ namespace ojph {
 
   namespace local
   {
+    static constexpr ui32 OJPH_TAG_TREE_MAX_LEVELS = 15; // extra root level fits in levs[]
 
     //////////////////////////////////////////////////////////////////////////
     struct tag_tree
     {
       void init(ui8* buf, ui32 *lev_idx, ui32 num_levels, size s, int init_val)
       {
+        if (num_levels > OJPH_TAG_TREE_MAX_LEVELS)
+          num_levels = OJPH_TAG_TREE_MAX_LEVELS;
         for (ui32 i = 0; i <= num_levels; ++i) //on extra level
           levs[i] = buf + lev_idx[i];
-        for (ui32 i = num_levels + 1; i < 16; ++i)
+        for (ui32 i = num_levels + 1; i <= OJPH_TAG_TREE_MAX_LEVELS; ++i)
           levs[i] = (ui8*)INT_MAX; //make it crash on error
         width = s.w;
         height = s.h;
@@ -76,11 +79,13 @@ namespace ojph {
 
       ui8* get(ui32 x, ui32 y, ui32 lev)
       {
+        if (lev > OJPH_TAG_TREE_MAX_LEVELS)
+          lev = OJPH_TAG_TREE_MAX_LEVELS;
         return levs[lev] + (x + y * ((width + (1 << lev) - 1) >> lev));
       }
 
       ui32 width, height, num_levels;
-      ui8* levs[16]; // you cannot have this high number of levels
+      ui8* levs[OJPH_TAG_TREE_MAX_LEVELS + 1];
     };
 
     //////////////////////////////////////////////////////////////////////////
@@ -109,6 +114,8 @@ namespace ojph {
 
         ui32 num_levels = 1 +
           ojph_max(log2ceil(cb_idxs[s].siz.w), log2ceil(cb_idxs[s].siz.h));
+        if (num_levels > OJPH_TAG_TREE_MAX_LEVELS)
+          num_levels = OJPH_TAG_TREE_MAX_LEVELS;
 
         //create quad trees for inclusion and missing msbs
         tag_tree inc_tag, inc_tag_flags, mmsb_tag, mmsb_tag_flags;
@@ -356,6 +363,8 @@ namespace ojph {
 
         ui32 num_levels = 1 +
           ojph_max(log2ceil(cb_idxs[s].siz.w), log2ceil(cb_idxs[s].siz.h));
+        if (num_levels > OJPH_TAG_TREE_MAX_LEVELS)
+          num_levels = OJPH_TAG_TREE_MAX_LEVELS;
 
         //create quad trees for inclusion and missing msbs
         tag_tree inc_tag, inc_tag_flags, mmsb_tag, mmsb_tag_flags;
