@@ -33,19 +33,6 @@ IMATH_LIB_ARCH = normalizePath(
 	),
 	winslash = "/"
 )
-DEFLATE_LIB_ARCH = normalizePath(
-	sprintf(
-		"%s/%s",
-		system.file(
-			"lib",
-			package = "libdeflate",
-			mustWork = TRUE
-		),
-		Sys.info()[["machine"]]
-	),
-	winslash = "/"
-)
-
 # Use pkg-config (if available) to find a system library
 package_name = "libopenexr"
 openexr_version_header = file.path(
@@ -256,8 +243,7 @@ define(
 	IMATH_INCLUDE_DIR = IMATH_INCLUDE_DIR,
 	IMATH_LIB_ARCH = IMATH_LIB_ARCH,
 	LIB_LINK_ASSIGN = LIB_LINK_ASSIGN,
-	LIB_INCLUDE_ASSIGN = LIB_INCLUDE_ASSIGN,
-	DEFLATE_LIB_ARCH = DEFLATE_LIB_ARCH
+	LIB_INCLUDE_ASSIGN = LIB_INCLUDE_ASSIGN
 )
 
 
@@ -303,10 +289,6 @@ cmake_cfg = c(
 	paste0("-DCMAKE_INSTALL_PREFIX=", inst_dir),
 	paste0("-DCMAKE_INSTALL_LIBDIR=lib/", TARGET_ARCH),
 	paste0("-DImath_DIR=", file.path(IMATH_LIB_ARCH, "cmake", "Imath")),
-	paste0(
-		"-Dlibdeflate_DIR=",
-		file.path(DEFLATE_LIB_ARCH, "cmake", "libdeflate")
-	),
 	"-DCMAKE_CXX_STANDARD=20",
 	"-DOPENEXR_INSTALL_PKG_CONFIG=ON",
 	"-DBUILD_SHARED_LIBS=OFF",
