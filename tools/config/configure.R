@@ -61,19 +61,13 @@ openexr_version_minor = parse_openexr_version("MINOR")
 openexr_version_patch = parse_openexr_version("PATCH")
 openexr_api = sprintf("%s_%s", openexr_version_major, openexr_version_minor)
 openexr_has_openjph = openexr_version_major >= 4
+inst_arch_lib_dir = file.path(PACKAGE_BASE_DIR, "inst", "lib", TARGET_ARCH)
 static_library_name = sprintf("libOpenEXR-%s", openexr_api)
 static_lib_filename = sprintf("%s.a", static_library_name)
 openjph_static_lib = if (openexr_has_openjph) {
 	normalizePath(
 		file.path(
-			PACKAGE_BASE_DIR,
-			"src",
-			"OpenEXR",
-			"build-cran",
-			"external",
-			"OpenJPH",
-			"src",
-			"core",
+			inst_arch_lib_dir,
 			"libopenjph.a"
 		),
 		winslash = "/",
@@ -296,7 +290,8 @@ cmake_cfg = c(
 	"-DOPENEXR_BUILD_EXAMPLES=OFF",
 	"-DOPENEXR_IS_SUBPROJECT=ON",
 	"-DCMAKE_BUILD_TYPE=Release",
-	"-DCMAKE_POSITION_INDEPENDENT_CODE=ON"
+	"-DCMAKE_POSITION_INDEPENDENT_CODE=ON",
+	"-DOPENEXR_FORCE_INTERNAL_OPENJPH=ON"
 )
 
 message(
