@@ -160,8 +160,7 @@ else()
   set(OPENJPH_SOURCE_DIR ${PROJECT_SOURCE_DIR}/external/OpenJPH)
   set(OPENJPH_BINARY_DIR ${PROJECT_BINARY_DIR}/external/OpenJPH)
   add_subdirectory(${OPENJPH_SOURCE_DIR}
-                   ${OPENJPH_BINARY_DIR}
-                   EXCLUDE_FROM_ALL)
+                   ${OPENJPH_BINARY_DIR})
   set_target_properties(openjph PROPERTIES
     POSITION_INDEPENDENT_CODE ON
     C_VISIBILITY_PRESET hidden
@@ -172,4 +171,3 @@ else()
   target_include_directories(OpenEXRCore PRIVATE ${OPENJPH_SOURCE_DIR}/src/core)
 
 endif()
-
