@@ -2,7 +2,7 @@ name: Fedora R-devel checks
 
 on:
   push:
-    branches: [ "main", "master", "test-branch" ]
+    branches: ['**']
   pull_request:
     branches: [ "main", "master" ]
   workflow_dispatch:
