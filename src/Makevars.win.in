@@ -11,6 +11,7 @@ OPENEXR_API = @OPENEXR_API@
 STATIC_LIB = $(LIB_DIR)/libOpenEXR-$(OPENEXR_API).a
 OPENJPH_LINK_FLAGS = @OPENJPH_LINK_FLAGS@
 OPENJPH_STATIC_LIB = @OPENJPH_STATIC_LIB@
+BUILD_STAMP = $(OPENEXR_DIR)/src/OpenEXR/build-cran/.build-complete
 
 @LIB_INCLUDE_ASSIGN@
 @LIB_LINK_ASSIGN@
@@ -37,9 +38,9 @@ CXXFLAGS = $(CXXFLAGS) $(CXXPICFLAGS)
 all: $(OBJECTS)
 
 
-$(OBJECTS): $(STATIC_LIB) $(OPENJPH_STATIC_LIB)
+$(OBJECTS): $(BUILD_STAMP)
 
-$(STATIC_LIB) $(OPENJPH_STATIC_LIB):
+$(BUILD_STAMP):
 	cd $(OPENEXR_DIR) && \
 	"$(R_HOME)/bin/Rscript" tools/search-replace.R \
 	  "src/OpenEXR/src/lib/OpenEXR/ImfInputPart.cpp" \
@@ -99,6 +100,7 @@ $(STATIC_LIB) $(OPENJPH_STATIC_LIB):
 	cd $(OPENEXR_DIR)/src/OpenEXR/build-cran && \
 	$(CMAKE) --build . --config Release && \
 	$(CMAKE) --install . --config Release && \
+	touch $(BUILD_STAMP) && \
 	cd @PACKAGE_BASE_DIR@ && \
 	"$(R_HOME)/bin/Rscript" tools/fix-line-endings.R \
 	src/Makevars \
