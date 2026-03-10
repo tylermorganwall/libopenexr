@@ -331,13 +331,9 @@ cc_cmd = first_non_empty(c(
 cxx_cmd = first_non_empty(c(
 	Sys.getenv("CXX20", unset = ""),
 	Sys.getenv("CXX17", unset = ""),
-	Sys.getenv("CXX14", unset = ""),
-	Sys.getenv("CXX11", unset = ""),
 	Sys.getenv("CXX", unset = ""),
 	read_config_value("CXX20"),
 	read_config_value("CXX17"),
-	read_config_value("CXX14"),
-	read_config_value("CXX11"),
 	read_config_value("CXX")
 ))
 
