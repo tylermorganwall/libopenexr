@@ -33,12 +33,6 @@
 #    define IMFSTDIO_HAVE_RANGES_PATH_VIEW 0
 #endif
 
-#if __cplusplus >= 202002L
-#    define IMFSTDIO_HAVE_CHAR8_PATH 1
-#else
-#    define IMFSTDIO_HAVE_CHAR8_PATH 0
-#endif
-
 using namespace std;
 #include "ImfNamespace.h"
 
@@ -55,10 +49,6 @@ make_ifstream (const char* filename)
                                             [] (char c) -> char8_t { return c; });
     return new ifstream (filesystem::path (u8view.begin (), u8view.end ()),
                          ios_base::in | ios_base::binary);
-#elif IMFSTDIO_HAVE_CHAR8_PATH
-    return new ifstream (
-        filesystem::path (reinterpret_cast<const char8_t*> (filename)),
-        ios_base::in | ios_base::binary);
 #else
     return new ifstream (filesystem::u8path (filename),
                          ios_base::in | ios_base::binary);
@@ -73,10 +63,6 @@ make_ofstream (const char* filename)
                                             [] (char c) -> char8_t { return c; });
     return new ofstream (filesystem::path (u8view.begin (), u8view.end ()),
                          ios_base::out | ios_base::binary);
-#elif IMFSTDIO_HAVE_CHAR8_PATH
-    return new ofstream (
-        filesystem::path (reinterpret_cast<const char8_t*> (filename)),
-        ios_base::out | ios_base::binary);
 #else
     return new ofstream (filesystem::u8path (filename),
                          ios_base::out | ios_base::binary);
