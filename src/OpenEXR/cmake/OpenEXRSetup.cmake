@@ -316,7 +316,7 @@ endif()
 option(OPENEXR_FORCE_INTERNAL_IMATH "Force using an internal imath" OFF)
 # Check to see if Imath is installed outside of the current build directory.
 set(OPENEXR_IMATH_REPO "https://github.com/AcademySoftwareFoundation/Imath.git" CACHE STRING "Repo for auto-build of Imath")
-set(OPENEXR_IMATH_TAG "main" CACHE STRING "Tag for auto-build of Imath (branch, tag, or SHA)")
+set(OPENEXR_IMATH_TAG "v3.2.2" CACHE STRING "Tag for auto-build of Imath (branch, tag, or SHA)")
 if(NOT OPENEXR_FORCE_INTERNAL_IMATH)
   #TODO: ^^ Release should not clone from main, this is a place holder
   set(CMAKE_IGNORE_PATH "${CMAKE_CURRENT_BINARY_DIR}/_deps/imath-src/config;${CMAKE_CURRENT_BINARY_DIR}/_deps/imath-build/config")
@@ -398,5 +398,18 @@ int main() {
 
   if(NOT HAS_VLD1)
     set(OPENEXR_MISSING_ARM_VLD1 TRUE)
+  endif()
+endif()
+
+###########################################
+# Enable SSE2 on 32-bit x86
+###########################################
+
+if(CMAKE_SYSTEM_PROCESSOR MATCHES "^(i[3-6]86|x86)$" AND NOT MSVC)
+  include(CheckCCompilerFlag)
+  check_c_compiler_flag("-msse2" HAS_SSE2_FLAG)
+  if(HAS_SSE2_FLAG)
+    add_compile_options(-msse2 -mfpmath=sse)
+    message(STATUS "Enabling SSE2 for 32-bit x86 build")
   endif()
 endif()

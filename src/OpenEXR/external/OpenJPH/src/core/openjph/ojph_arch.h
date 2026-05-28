@@ -67,7 +67,7 @@
 // preprocessor directives for architecture
 ///////////////////////////////////////////////////////////////////////////////
 #if defined(__arm__) || defined(__TARGET_ARCH_ARM)  \
-  || defined(__aarch64__) || defined(_M_ARM64)
+  || defined(__aarch64__) || defined(_M_ARM64) || defined(_M_ARM64EC)
   #define OJPH_ARCH_ARM
 #elif defined(__i386) || defined(__i386__) || defined(_M_IX86)
   #define OJPH_ARCH_I386
@@ -108,6 +108,10 @@ namespace ojph {
 #define OJPH_OS_ANDROID
 #elif (defined __linux)
 #define OJPH_OS_LINUX
+#elif (defined __FreeBSD__)
+#define OJPH_OS_FREEBSD
+#elif (defined __OpenBSD__)
+#define OJPH_OS_OPENBSD
 #endif
 
   /////////////////////////////////////////////////////////////////////////////

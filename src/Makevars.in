@@ -1,4 +1,5 @@
 # OpenEXR package Makevars
+CXX_STD = CXX17
 CMAKE = @CMAKE@
 
 # Directories
