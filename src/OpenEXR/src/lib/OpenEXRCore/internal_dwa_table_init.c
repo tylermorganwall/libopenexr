@@ -11,7 +11,7 @@
 extern uint16_t* exrcore_dwaToLinearTable;
 extern uint16_t* exrcore_dwaToNonLinearTable;
 
-static once_flag dwa_tables_once = ONCE_FLAG_INIT;
+static exrcore_once_flag dwa_tables_once = EXRCORE_ONCE_FLAG_INIT;
 
 
 // Nonlinearly encode luminance. For values below 1.0, we want
@@ -104,5 +104,5 @@ init_dwa_tables(void)
 void
 exrcore_ensure_dwa_tables()
 {
-    call_once (&dwa_tables_once, init_dwa_tables);
+    exrcore_call_once (&dwa_tables_once, init_dwa_tables);
 }

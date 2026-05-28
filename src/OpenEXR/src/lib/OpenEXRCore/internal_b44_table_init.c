@@ -11,7 +11,7 @@
 extern uint16_t* exrcore_expTable;
 extern uint16_t* exrcore_logTable;
 
-static once_flag b44_tables_once = ONCE_FLAG_INIT;
+static exrcore_once_flag b44_tables_once = EXRCORE_ONCE_FLAG_INIT;
 
 static inline uint16_t
 b44_convertFromLinear (uint16_t x)
@@ -53,5 +53,5 @@ init_b44_tables(void)
 void
 exrcore_ensure_b44_tables()
 {
-    call_once (&b44_tables_once, init_b44_tables);
+    exrcore_call_once (&b44_tables_once, init_b44_tables);
 }
