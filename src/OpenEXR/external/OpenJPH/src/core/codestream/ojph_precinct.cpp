@@ -45,6 +45,7 @@
 #include "ojph_precinct.h"
 #include "ojph_subband.h"
 #include "ojph_codeblock.h" // for coded_cb_header
+#include "ojph_message.h"
 #include "ojph_bitbuffer_write.h"
 #include "ojph_bitbuffer_read.h"
 
@@ -57,11 +58,18 @@ namespace ojph {
     //////////////////////////////////////////////////////////////////////////
     struct tag_tree
     {
+      static const ui32 max_num_levels = 16;
+
       void init(ui8* buf, ui32 *lev_idx, ui32 num_levels, size s, int init_val)
       {
+        if (num_levels >= max_num_levels)
+        {
+          OJPH_ERROR(0x000300E1, "too many tag tree levels");
+          num_levels = max_num_levels - 1;
+        }
         for (ui32 i = 0; i <= num_levels; ++i) //on extra level
           levs[i] = buf + lev_idx[i];
-        for (ui32 i = num_levels + 1; i < 16; ++i)
+        for (ui32 i = num_levels + 1; i < max_num_levels; ++i)
           levs[i] = (ui8*)INT_MAX; //make it crash on error
         width = s.w;
         height = s.h;
@@ -76,11 +84,16 @@ namespace ojph {
 
       ui8* get(ui32 x, ui32 y, ui32 lev)
       {
+        if (lev >= max_num_levels)
+        {
+          OJPH_ERROR(0x000300E2, "invalid tag tree level");
+          lev = max_num_levels - 1;
+        }
         return levs[lev] + (x + y * ((width + (1 << lev) - 1) >> lev));
       }
 
       ui32 width, height, num_levels;
-      ui8* levs[16]; // you cannot have this high number of levels
+      ui8* levs[max_num_levels]; // you cannot have this high number of levels
     };
 
     //////////////////////////////////////////////////////////////////////////
