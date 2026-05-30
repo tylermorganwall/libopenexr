@@ -1,0 +1,495 @@
+
+
+# libopenexr
+
+<!-- badges: start -->
+
+[![R-CMD-check](https://github.com/tylermorganwall/libopenexr/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/tylermorganwall/libopenexr/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
+
+`libopenexr` provides OpenEXR headers and static libraries for R
+packages that need high-dynamic-range EXR image support. It also
+includes a small R API for reading and writing simple RGBA EXR files.
+
+The package is primarily intended for package authors. The R functions
+are useful for quick tests and examples, but the main purpose of this
+package is to make OpenEXR available to downstream packages without
+requiring users to install OpenEXR and Imath manually.
+
+## Installation
+
+``` r
+# once released on CRAN
+install.packages("libopenexr")
+
+# development version
+remotes::install_github("tylermorganwall/libopenexr")
+```
+
+## Basic R Usage
+
+`read_exr()` reads RGBA channels into numeric matrices. `write_exr()`
+writes numeric RGBA matrices as a 32-bit float EXR file.
+
+``` r
+library(libopenexr)
+
+exr_file = tempfile(fileext = ".exr")
+
+write_exr(
+  exr_file,
+  r = widecolorgamut[, , 1],
+  g = widecolorgamut[, , 2],
+  b = widecolorgamut[, , 3],
+  a = widecolorgamut[, , 4]
+)
+
+exr = read_exr(exr_file)
+str(exr[c("width", "height")])
+#> List of 2
+#>  $ width : int 800
+#>  $ height: int 800
+
+# Increase red-channel exposure and write a second EXR.
+edited_file = tempfile(fileext = ".exr")
+write_exr(
+  edited_file,
+  r = exr$r * 2,
+  g = exr$g,
+  b = exr$b,
+  a = exr$a
+)
+```
+
+``` r
+rayimage::ray_read_image(edited_file) |>
+  rayimage::render_tonemap(method = "hbd") |>
+  rayimage::plot_image()
+```
+
+<img src="man/figures/README-basic-exr-preview-1.png"
+style="width:100.0%" />
+
+For image processing workflows, `rayimage` uses `libopenexr` internally
+when reading or writing `.exr` files:
+
+``` r
+library(rayimage)
+
+input = tempfile(fileext = ".exr")
+output = tempfile(fileext = ".exr")
+
+write_exr(
+  input,
+  r = widecolorgamut[, , 1],
+  g = widecolorgamut[, , 2],
+  b = widecolorgamut[, , 3],
+  a = widecolorgamut[, , 4]
+)
+
+processed = ray_read_image(input) |>
+  render_exposure(exposure = -1) |>
+  render_tonemap(method = "hbd")
+
+ray_write_image(processed, output)
+plot_image(processed)
+```
+
+<img src="man/figures/README-rayimage-exr-1.png" style="width:100.0%" />
+
+`rayrender` can also save rendered output directly to EXR through
+`rayimage::ray_write_image()`:
+
+``` r
+library(rayrender)
+
+render_file = tempfile(fileext = ".exr")
+
+scene = generate_cornell(lightwidth = 180, lightdepth = 180) |>
+  add_object(
+    sphere(
+      x = 555 / 2,
+      y = 120,
+      z = 555 / 2,
+      radius = 120,
+      material = diffuse(color = "white")
+    )
+  )
+
+render_scene(
+  scene,
+  filename = render_file,
+  width = 320,
+  height = 320,
+  samples = 16,
+  lookfrom = c(278, 278, -800),
+  lookat = c(278, 278, 0),
+  aperture = 0,
+  fov = 40,
+  tonemap = "raw",
+  bloom = FALSE,
+  plot_scene = FALSE,
+  parallel = TRUE,
+  progress = FALSE
+)
+
+rayimage::ray_read_image(render_file) |>
+  rayimage::render_tonemap(method = "hbd") |>
+  rayimage::plot_image()
+```
+
+<img src="man/figures/README-rayrender-exr-1.png"
+style="width:100.0%" />
+
+## Using libopenexr in Another Package
+
+Downstream packages should list both `libopenexr` and `libimath` in
+`LinkingTo`:
+
+``` text
+LinkingTo:
+    libimath,
+    libopenexr
+SystemRequirements: OpenEXR (>= 4.0.0), Imath (>= 3.2.0)
+```
+
+The package ships static archives for convenience, but CRAN packages
+should first try to use suitable system libraries. In practice, many
+build machines have older OpenEXR and Imath versions, so your
+`configure` script should check versions and fall back to the
+package-provided static libraries when the system libraries are missing
+or too old.
+
+I recommend using Kevin Ushey’s R-based `configure.R` for configuring
+your package. It lets you keep the configure logic in R, use the same
+logic on Unix and Windows, and generate `src/Makevars` from
+`src/Makevars.in`. See the `tools/config.R` helper used in `rayrender`,
+`skymodelr`, and this package for a complete implementation.
+
+Your top-level configure scripts can be simple wrappers:
+
+``` sh
+#!/usr/bin/env sh
+: "${R_HOME=`R RHOME`}"
+"${R_HOME}/bin/Rscript" tools/config.R configure "$@"
+```
+
+``` sh
+#!/usr/bin/env sh
+"${R_HOME}/bin${R_ARCH_BIN}/Rscript.exe" tools/config.R configure "$@"
+```
+
+### Configure Example
+
+This is a compact `tools/config/configure.R` example. It checks for
+native OpenEXR and Imath with `pkg-config`, requires compatible
+versions, and falls back to the static archives installed by
+`libopenexr` and `libimath`.
+
+``` r
+options(
+  configure.common = FALSE,
+  configure.platform = FALSE
+)
+
+is_windows = identical(.Platform$OS.type, "windows")
+target_arch = Sys.info()[["machine"]]
+
+openexr_min_version = "4.0.0"
+imath_min_version = "3.2.0"
+openexr_api = "4_0"
+imath_api = "3_2"
+
+quote_path = function(path) {
+  shQuote(
+    normalizePath(path, winslash = "/", mustWork = FALSE),
+    type = if (is_windows) "cmd" else "sh"
+  )
+}
+
+flag_path = function(flag, path) {
+  paste0(flag, quote_path(path))
+}
+
+collapse_flags = function(flags) {
+  flags = flags[nzchar(flags)]
+  paste(flags, collapse = " ")
+}
+
+read_runtime_link_flags = function(path) {
+  if (!file.exists(path)) {
+    return("")
+  }
+
+  flags = unlist(strsplit(
+    trimws(paste(readLines(path, warn = FALSE), collapse = " ")),
+    "\\s+"
+  ))
+  collapse_flags(unique(flags))
+}
+
+pkgconfig = Sys.which("pkg-config")
+
+pkg_config_exists = function(module, version) {
+  if (!nzchar(pkgconfig)) {
+    return(FALSE)
+  }
+
+  status = system2(
+    pkgconfig,
+    c("--exists", sprintf("%s >= %s", module, version)),
+    stdout = FALSE,
+    stderr = FALSE
+  )
+
+  identical(as.integer(status), 0L)
+}
+
+pkg_config_flags = function(args, module) {
+  trimws(paste(
+    system2(pkgconfig, c(args, module), stdout = TRUE),
+    collapse = " "
+  ))
+}
+
+use_system_openexr =
+  pkg_config_exists("OpenEXR", openexr_min_version) &&
+  pkg_config_exists("Imath", imath_min_version)
+
+if (use_system_openexr) {
+  message("*** configure: using system OpenEXR and Imath")
+
+  OPENEXR_CPPFLAGS = collapse_flags(c(
+    pkg_config_flags("--cflags", "OpenEXR"),
+    pkg_config_flags("--cflags", "Imath")
+  ))
+
+  OPENEXR_LIBS = collapse_flags(c(
+    pkg_config_flags("--libs", "OpenEXR"),
+    pkg_config_flags("--libs", "Imath")
+  ))
+} else {
+  message("*** configure: using libopenexr and libimath static libraries")
+
+  openexr_include_root = system.file(
+    "include",
+    package = "libopenexr",
+    mustWork = TRUE
+  )
+  openexr_include_dir = system.file(
+    "include",
+    "OpenEXR",
+    package = "libopenexr",
+    mustWork = TRUE
+  )
+  openexr_lib_arch = normalizePath(
+    file.path(
+      system.file("lib", package = "libopenexr", mustWork = TRUE),
+      target_arch
+    ),
+    winslash = "/",
+    mustWork = TRUE
+  )
+
+  imath_include_root = system.file(
+    "include",
+    package = "libimath",
+    mustWork = TRUE
+  )
+  imath_include_dir = system.file(
+    "include",
+    "Imath",
+    package = "libimath",
+    mustWork = TRUE
+  )
+  imath_lib_arch = normalizePath(
+    file.path(
+      system.file("lib", package = "libimath", mustWork = TRUE),
+      target_arch
+    ),
+    winslash = "/",
+    mustWork = TRUE
+  )
+
+  openjph_static_lib = file.path(openexr_lib_arch, "libopenjph.a")
+  openjph_link = if (file.exists(openjph_static_lib)) {
+    quote_path(openjph_static_lib)
+  } else {
+    ""
+  }
+
+  openexr_runtime_flags = read_runtime_link_flags(file.path(
+    openexr_lib_arch,
+    "libopenexr-runtime-link-flags"
+  ))
+  imath_runtime_flags = read_runtime_link_flags(file.path(
+    imath_lib_arch,
+    "libimath-runtime-link-flags"
+  ))
+
+  OPENEXR_CPPFLAGS = collapse_flags(c(
+    flag_path("-I", openexr_include_root),
+    flag_path("-I", openexr_include_dir),
+    flag_path("-I", imath_include_root),
+    flag_path("-I", imath_include_dir)
+  ))
+
+  OPENEXR_LIBS = collapse_flags(c(
+    flag_path("-L", openexr_lib_arch),
+    sprintf("-lOpenEXRUtil-%s", openexr_api),
+    sprintf("-lOpenEXR-%s", openexr_api),
+    sprintf("-lOpenEXRCore-%s", openexr_api),
+    openjph_link,
+    sprintf("-lIlmThread-%s", openexr_api),
+    sprintf("-lIex-%s", openexr_api),
+    flag_path("-L", imath_lib_arch),
+    sprintf("-lImath-%s", imath_api),
+    openexr_runtime_flags,
+    imath_runtime_flags
+  ))
+}
+
+define(
+  OPENEXR_CPPFLAGS = OPENEXR_CPPFLAGS,
+  OPENEXR_LIBS = OPENEXR_LIBS
+)
+
+if (is_windows) {
+  configure_file("src/Makevars.win.in")
+} else {
+  configure_file("src/Makevars.in")
+}
+```
+
+### Makevars
+
+Use the configured values in both `src/Makevars.in` and
+`src/Makevars.win.in`:
+
+``` make
+PKG_CPPFLAGS = @OPENEXR_CPPFLAGS@
+PKG_LIBS = @OPENEXR_LIBS@ $(SAN_LIBS)
+
+OBJECTS = my_exr_reader.o R_init_mypackage.o
+
+$(SHLIB): $(OBJECTS)
+```
+
+For the bundled fallback, keep the static libraries in dependency order:
+
+``` make
+-lOpenEXRUtil-4_0 \
+-lOpenEXR-4_0 \
+-lOpenEXRCore-4_0 \
+libopenjph.a \
+-lIlmThread-4_0 \
+-lIex-4_0 \
+-lImath-3_2
+```
+
+Static linkers resolve symbols from left to right, so libraries that
+satisfy OpenEXR symbols need to appear after the OpenEXR archives. If
+your package does not use `OpenEXRUtil`, you can omit
+`-lOpenEXRUtil-4_0`.
+
+### C++ Example
+
+The following `.Call()` example reads an EXR file into an R array with
+dimensions `height x width x 4`.
+
+``` cpp
+#define R_NO_REMAP
+
+#include <R.h>
+#include <Rinternals.h>
+
+#include <OpenEXR/ImfChannelList.h>
+#include <OpenEXR/ImfFrameBuffer.h>
+#include <OpenEXR/ImfHeader.h>
+#include <OpenEXR/ImfInputFile.h>
+#include <Imath/ImathBox.h>
+
+#include <cstddef>
+#include <exception>
+#include <vector>
+
+using namespace OPENEXR_IMF_NAMESPACE;
+using namespace IMATH_NAMESPACE;
+
+extern "C" SEXP C_read_exr_array(SEXP path_sexp) {
+  const char *path = CHAR(STRING_ELT(path_sexp, 0));
+
+  try {
+    InputFile file(path, 1);
+    const Header &header = file.header();
+    Box2i data_window = header.dataWindow();
+
+    const int width = data_window.max.x - data_window.min.x + 1;
+    const int height = data_window.max.y - data_window.min.y + 1;
+    const int pixels = width * height;
+
+    std::vector<float> red(pixels);
+    std::vector<float> green(pixels);
+    std::vector<float> blue(pixels);
+    std::vector<float> alpha(pixels, 1.0f);
+
+    FrameBuffer frame_buffer;
+    const size_t x_stride = sizeof(float);
+    const size_t y_stride = sizeof(float) * static_cast<size_t>(width);
+    const ptrdiff_t offset =
+      data_window.min.x * static_cast<ptrdiff_t>(x_stride) +
+      data_window.min.y * static_cast<ptrdiff_t>(y_stride);
+
+    frame_buffer.insert(
+      "R",
+      Slice(FLOAT, reinterpret_cast<char *>(red.data()) - offset, x_stride, y_stride)
+    );
+    frame_buffer.insert(
+      "G",
+      Slice(FLOAT, reinterpret_cast<char *>(green.data()) - offset, x_stride, y_stride)
+    );
+    frame_buffer.insert(
+      "B",
+      Slice(FLOAT, reinterpret_cast<char *>(blue.data()) - offset, x_stride, y_stride)
+    );
+
+    if (header.channels().findChannel("A") != nullptr) {
+      frame_buffer.insert(
+        "A",
+        Slice(FLOAT, reinterpret_cast<char *>(alpha.data()) - offset, x_stride, y_stride)
+      );
+    }
+
+    file.setFrameBuffer(frame_buffer);
+    file.readPixels(data_window.min.y, data_window.max.y);
+
+    SEXP out = PROTECT(Rf_allocVector(REALSXP, pixels * 4));
+    double *dst = REAL(out);
+
+    for (int y = 0; y < height; ++y) {
+      for (int x = 0; x < width; ++x) {
+        const int row_major = y * width + x;
+        const int r_index = y + x * height;
+
+        dst[r_index] = red[row_major];
+        dst[r_index + pixels] = green[row_major];
+        dst[r_index + pixels * 2] = blue[row_major];
+        dst[r_index + pixels * 3] = alpha[row_major];
+      }
+    }
+
+    SEXP dim = PROTECT(Rf_allocVector(INTSXP, 3));
+    INTEGER(dim)[0] = height;
+    INTEGER(dim)[1] = width;
+    INTEGER(dim)[2] = 4;
+    Rf_setAttrib(out, R_DimSymbol, dim);
+
+    UNPROTECT(2);
+    return out;
+  } catch (const std::exception &err) {
+    Rf_error("OpenEXR read error: %s", err.what());
+  }
+
+  return R_NilValue;
+}
+```

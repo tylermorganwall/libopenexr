@@ -3,5 +3,6 @@
 ^compile_commands\.json$
 ^\.cache$
 ^inst/lib/.+$
+^src/OpenEXR/build-cran$
 ^\.github$
 ^cran-comments\.md$

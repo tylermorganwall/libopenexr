@@ -5,11 +5,13 @@
 compile_commands.json
 .cache
 inst/include/OpenEXR
+inst/include/openjph
 inst/lib
 src/*.so
 src/*.o
 src/Makevars
 src/OpenEXR/build
+src/OpenEXR/build-cran
 config.status
 config.log
 autom4te.cache
