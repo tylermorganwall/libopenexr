@@ -6,3 +6,4 @@
 ^src/OpenEXR/build-cran$
 ^\.github$
 ^cran-comments\.md$
+^README\.Rmd$
