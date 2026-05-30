@@ -426,6 +426,40 @@ trim_whitespace <- function(x) {
   gsub("^[[:space:]]*|[[:space:]]*$", "", x)
 }
 
+with_envvar <- function(env, code) {
+  if (length(env) == 0) {
+    return(force(code))
+  }
+
+  env <- env[
+    !is.na(names(env)) &
+      nzchar(names(env)) &
+      !is.na(env) &
+      nzchar(env)
+  ]
+  if (length(env) == 0) {
+    return(force(code))
+  }
+
+  old <- Sys.getenv(names(env), unset = NA_character_)
+
+  on.exit(
+    {
+      restore <- !is.na(old)
+      if (any(restore)) {
+        do.call(Sys.setenv, as.list(old[restore]))
+      }
+      if (any(!restore)) {
+        Sys.unsetenv(names(old)[!restore])
+      }
+    },
+    add = TRUE
+  )
+
+  do.call(Sys.setenv, as.list(env))
+  force(code)
+}
+
 configure_verbose <- function() {
   getOption("configure.verbose", !interactive())
 }

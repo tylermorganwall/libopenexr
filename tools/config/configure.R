@@ -86,6 +86,32 @@ package_version = sprintf(
 openjph_link_flags = if (openexr_has_openjph) openjph_static_lib else ""
 lib_system = ""
 
+read_runtime_link_flags = function(path) {
+  if (!file.exists(path)) {
+    return("")
+  }
+
+  flags = unlist(strsplit(
+    trimws(paste(readLines(path, warn = FALSE), collapse = " ")),
+    "\\s+"
+  ))
+  paste(unique(flags[nzchar(flags)]), collapse = " ")
+}
+
+runtime_link_flags = read_runtime_link_flags(
+  file.path(IMATH_LIB_ARCH, "libimath-runtime-link-flags")
+)
+if (nzchar(runtime_link_flags)) {
+  message(sprintf(
+    "*** configure: using Imath runtime link flags '%s'",
+    runtime_link_flags
+  ))
+} else {
+  message(
+    "*** configure: no Imath runtime link flags file found; using none"
+  )
+}
+
 pkgconfig_path = Sys.which("pkg-config")
 
 lib_exists = FALSE
@@ -233,6 +259,7 @@ define(
   OPENEXR_API = openexr_api,
   OPENJPH_LINK_FLAGS = openjph_link_flags,
   OPENJPH_STATIC_LIB = openjph_static_lib,
+  RUNTIME_LINK_FLAGS = runtime_link_flags,
   LIB_EXISTS = as.character(lib_exists),
   IMATH_INCLUDE_DIR = IMATH_INCLUDE_DIR,
   IMATH_LIB_ARCH = IMATH_LIB_ARCH,
@@ -323,27 +350,66 @@ first_non_empty = function(values) {
   values[[1]]
 }
 
+extract_compiler_flags = function(cmd) {
+  tokens = strsplit(trimws(cmd), "\\s+")[[1]]
+  if (length(tokens) <= 1) {
+    return("")
+  }
+  compiler_tokens = 1
+  compiler_wrappers = c("ccache", "sccache", "distcc")
+  if (
+    basename(tokens[[1]]) %in%
+      compiler_wrappers &&
+      length(tokens) > compiler_tokens
+  ) {
+    compiler_tokens = compiler_tokens + 1
+  }
+  paste(tokens[-seq_len(compiler_tokens)], collapse = " ")
+}
+
+has_standard_flag = function(flags) {
+  grepl("(^|[[:space:]])-std([=[:space:]]|$)", flags)
+}
+
 cc_cmd = first_non_empty(c(
   Sys.getenv("CC", unset = ""),
   read_config_value("CC")
 ))
 
 cxx_cmd = first_non_empty(c(
-  Sys.getenv("CXX17", unset = ""),
-  Sys.getenv("CXX20", unset = ""),
   Sys.getenv("CXX", unset = ""),
-  read_config_value("CXX17"),
-  read_config_value("CXX20"),
   read_config_value("CXX")
 ))
 
+cxx_flags = extract_compiler_flags(cxx_cmd)
+cxx_std_flag = first_non_empty(c(
+  Sys.getenv("CXX17STD", unset = ""),
+  read_config_value("CXX17STD")
+))
+if (!has_standard_flag(cxx_flags) && nzchar(cxx_std_flag)) {
+  message(sprintf(
+    "*** configure: adding C++ standard flag '%s'",
+    cxx_std_flag
+  ))
+  cxx_flags = paste(
+    c(cxx_flags, cxx_std_flag)[
+      nzchar(c(cxx_flags, cxx_std_flag))
+    ],
+    collapse = " "
+  )
+}
+
+define(
+  MAKE_CXX_FLAGS = cxx_flags
+)
+
 cmake_env = character()
 if (nzchar(cc_cmd)) {
-  cmake_env = c(cmake_env, paste0("CC=", shQuote(cc_cmd)))
+  cmake_env["CC"] = cc_cmd
   message(sprintf("*** configure: CMake CC='%s'", cc_cmd))
 }
 if (nzchar(cxx_cmd)) {
-  cmake_env = c(cmake_env, paste0("CXX=", shQuote(cxx_cmd)))
+  cmake_env["CXX"] = cxx_cmd
   message(sprintf("*** configure: CMake CXX='%s'", cxx_cmd))
 }
 
@@ -351,7 +417,7 @@ oldwd = getwd()
 setwd(build_dir)
 on.exit(setwd(oldwd), add = TRUE)
 
-status = system2(CMAKE, cmake_cfg, env = cmake_env)
+status = with_envvar(cmake_env, system2(CMAKE, cmake_cfg))
 if (status != 0) {
   stop("CMake configure step failed")
 }
