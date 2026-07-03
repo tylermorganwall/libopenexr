@@ -4,7 +4,14 @@
 \alias{write_exr}
 \title{Write an OpenEXR image}
 \usage{
-write_exr(path, r, g, b, a = matrix(1, nrow = nrow(r), ncol = ncol(r)))
+write_exr(
+  path,
+  r,
+  g,
+  b,
+  a = matrix(1, nrow = nrow(r), ncol = ncol(r)),
+  metadata = NULL
+)
 }
 \arguments{
 \item{path}{Character scalar output file.}
@@ -16,12 +23,23 @@ write_exr(path, r, g, b, a = matrix(1, nrow = nrow(r), ncol = ncol(r)))
 \item{b}{Numeric matrix, blue channel.}
 
 \item{a}{Numeric matrix, alpha channel.}
+
+\item{metadata}{Default `NULL`. Optional EXR header metadata list with
+supported fields `chromaticities`, `adoptedNeutral`, `whiteLuminance`,
+and `envmap`.}
 }
 \value{
 None.
 }
 \description{
 Save RGBA numeric matrices to an OpenEXR file (32‑bit float, ZIP compression).
+}
+\details{
+`metadata$chromaticities` can be a named list with `red`, `green`,
+`blue`, and `white` numeric xy vectors, a 4x2 numeric matrix, or a numeric
+vector of length 8 in red, green, blue, white xy order. `adoptedNeutral`
+must be a length-2 numeric xy vector, `whiteLuminance` must be a numeric
+scalar, and `envmap` must be `"latlong"`, `"cube"`, `0`, or `1`.
 }
 \examples{
 #Write the included data to an EXR file

@@ -12,11 +12,19 @@ read_exr(path, array = FALSE)
 \item{array}{Default `FALSE`. Return a 4-layer RGBA array instead of a list.}
 }
 \value{
-A list with elements `r`, `g`, `b`, `a` (numeric matrices), and
-  the integer dimensions `width`, `height`.
+A list with elements `r`, `g`, `b`, `a` (numeric matrices),
+  the integer dimensions `width`, `height`, and a `metadata` list.
+  If `array = TRUE`, the metadata list is returned as the `metadata`
+  attribute.
 }
 \description{
 Load an RGBA OpenEXR image into R numeric matrices.
+}
+\details{
+The `metadata` list contains only metadata present in the file.
+`chromaticities` is returned as a named list of `red`, `green`, `blue`,
+and `white` xy vectors. `adoptedNeutral` is returned as an xy vector,
+`whiteLuminance` as a scalar, and `envmap` as `"latlong"` or `"cube"`.
 }
 \examples{
 #Write the included data to an EXR file
