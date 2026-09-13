@@ -30,7 +30,7 @@ read_exr = function(path, array = FALSE) {
   if (!array) {
     return(exr)
   } else {
-    exr_arr = array(data = 0, dim = c(exr$width, exr$height, 4))
+    exr_arr = array(data = 0, dim = c(exr$height, exr$width, 4))
     exr_arr[,, 1] = exr$r
     exr_arr[,, 2] = exr$g
     exr_arr[,, 3] = exr$b

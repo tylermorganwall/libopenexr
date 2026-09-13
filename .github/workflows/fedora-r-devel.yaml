@@ -35,6 +35,12 @@ jobs:
       - name: Put /opt/R-devel/bin on PATH
         run: echo "/opt/R-devel/bin" >> "$GITHUB_PATH"
 
+      - name: Install R dependencies
+        shell: Rscript {0}
+        run: |
+          install.packages("libimath", repos = "https://cloud.r-project.org", Ncpus = 2)
+          stopifnot(packageVersion("libimath") >= "3.2.2")
+
       - name: Build & check
         run: |
           R CMD build .
@@ -69,6 +75,12 @@ jobs:
 
       - name: Put /opt/R-devel/bin on PATH
         run: echo "/opt/R-devel/bin" >> "$GITHUB_PATH"
+
+      - name: Install R dependencies
+        shell: Rscript {0}
+        run: |
+          install.packages("libimath", repos = "https://cloud.r-project.org", Ncpus = 2)
+          stopifnot(packageVersion("libimath") >= "3.2.2")
 
       - name: Build & check
         run: |

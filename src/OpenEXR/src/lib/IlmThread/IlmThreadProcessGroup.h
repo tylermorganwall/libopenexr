@@ -100,7 +100,7 @@ public:
         Process* newhead;
         do
         {
-            if (!ret) {}
+            if (!ret) throw IEX_NAMESPACE::LogicExc ("ProcessGroup pop failed");
                 //////std::cerr << "GACK: serious failure case???" << std::endl;
 
             newhead = ret->next;
